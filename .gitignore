@@ -1,0 +1,34 @@
+# --- Entornos y dependencias ---
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+.ipynb_checkpoints/
+__pycache__/
+*.pyc
+
+# --- Archivos de sistema operativo ---
+.DS_Store
+Thumbs.db
+ehthumbs.db
+
+# --- Volumen de datos ---
+# Ignoramos todo el contenido de data
+data/*
+# Excepciones para mantener la estructura (gitkeep)
+!data/.gitkeep
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/final/.gitkeep
+
+# Excepción para el archivo específico que quieres compartir
+!data/processed/Polos_2.csv
+
+# --- Otros directorios de estructura ---
+src/r_procs/*
+!src/r_procs/.gitkeep
+
+# --- IDEs y herramientas ---
+.vscode/
+.idea/
+*.log

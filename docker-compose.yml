@@ -1,0 +1,30 @@
+name: Simulacion_financiera  # Este nombre será fijo en Docker, sin importar cómo se llame la carpeta en Windows/Mac
+
+services:
+  # 1. La máquina de R
+  rstudio:
+    build: ./entorno_r
+    ports:
+      - "8787:8787"
+    environment:
+      - PASSWORD=admin
+    volumes:
+      - ./data:/home/rstudio/data
+      - ./src:/home/rstudio/src
+
+  # 2. La máquina de Python
+  pyspark:
+      build: ./entorno_python
+      ports:
+        - "8888:8888"
+      environment:
+        - JUPYTER_TOKEN=admin  # Ahora tu contraseña será "admin"
+      volumes:
+        - ./data:/home/jovyan/data
+
+
+
+
+
+
+
