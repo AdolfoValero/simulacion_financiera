@@ -1,0 +1,92 @@
+Polo_nombre,Lat_polo,Lon_polo,cve_ent_polo,cve_mun_polo,ent_polo,mun_polo,loc_polo,Vocacion_Estrategica,Plan_Estrategico,FAC_SOCECO,VAL_FRIC
+Aguascalientes Sur (Nissan Site),21.785,-102.285,1,1,Aguascalientes,Aguascalientes,,Hub de Manufactura Global,Cluster Japon-Mexico,1.1,1.3
+Polo Aguascalientes (Tech),21.882,-102.296,1,1,Aguascalientes,Aguascalientes,,Hub de Manufactura Global,Plan Manufactura Avanzada,1.15,1.5
+Polo Baja California Sur,24.142,-110.312,3,3,B.C.S.,La Paz,,Nodo Logistico e Industrial,Plan Pacifico Sur,1.15,1.4
+Parque Industrial Aeropuerto Tijuana,32.545,-116.975,2,4,Baja California,Tijuana,,Hub de Manufactura Global,Maquiladora Medica y Tech,1.25,1.5
+Parque Industrial Pacífico / El Florido,32.4633,-116.969,2,4,Baja California,Tijuana,,Hub de Manufactura Global,Nearshoring Frontera Norte,1.25,1.4
+Polo Mexicali (Silicon Border),32.627,-115.454,2,2,Baja California,Mexicali,,Ecosistema de Innovacion Tech,Plan Nearshoring Frontera,1.2,1.4
+Valle de Guadalupe,32.095,-116.665,2,1,Baja California,Ensenada,,Agroindustria de Exportacion,Corredor del Vino,1.25,1.7
+Parque Industrial Pacífico / El Florido,32.4697,-116.8202,2,4,Baja California,Tijuana,,Hub de Manufactura Global,Nearshoring Frontera Norte,1.25,1.4
+Polo Seybaplaya,19.642,-90.645,4,13,Campeche,Seybaplaya,,Infraestructura Energetica y Portuaria,PODEBI (Campeche),1,1.1
+Corredor Financiero Reforma-Polanco,19.4273,-99.1676,9,15,CDMX,Cuauhtémoc,,Centro de Negocios y Plusvalia,Plan Maestro CDMX,1.45,2.2
+Corredor Financiero Reforma-Polanco,19.4335,-99.1855,9,16,CDMX,Miguel Hidalgo,,Centro de Negocios y Plusvalia,Plan Maestro CDMX,1.45,2.2
+Zona Industrial Vallejo-i,19.493,-99.163,9,2,CDMX,Azcapotzalco,,Ecosistema de Innovacion Tech,Vallejo-i (CDMX),1.2,1.8
+Polo Tapachula,14.901,-92.261,7,89,Chiapas,Tapachula,,Nodo Logistico e Industrial,PODEBI (Frontera Sur),0.8,1.1
+Polo Chihuahua (Exportación),28.635,-106.085,8,19,Chihuahua,Chihuahua,,Hub de Manufactura Global,PODECOBIS (Norte),1.1,1.3
+Zona Industrial Bermúdez,31.685,-106.405,8,37,Chihuahua,Juárez,,Hub de Manufactura Global,Eje Fronterizo Juarez,1.2,1.4
+Parque Industrial Derramadero,25.265,-101.125,5,30,Coahuila,Saltillo,,Hub de Manufactura Global,Cluster Coahuila,1.1,1.2
+Polo Laguna Innovation Park,25.543,-103.407,5,35,Coahuila,Torreón,,Ecosistema de Innovacion Tech,Plan Desarrollo La Laguna,1.1,1.3
+Polo Piedras Negras,28.703,-100.523,5,25,Coahuila,Piedras Negras,,Nodo Logistico e Industrial,Eje de Exportacion Norte,1.1,1.3
+Polo Ramos Arizpe (EV Hub),25.541,-100.947,5,27,Coahuila,Ramos Arizpe,,Hub de Manufactura Global,Cluster Automotriz Coahuila,1.15,1.3
+Puerto de Manzanillo,19.0522,-104.3158,6,7,Colima,Manzanillo,,Infraestructura Energetica y Portuaria,Plan Maestro Portuario,1.15,1.4
+Polo Durango (Logística),24.027,-104.653,10,5,Durango,Durango,,Nodo Logistico e Industrial,PODECOBIS (Durango),0.9,1.2
+Corredor CTT (Nearshoring),19.645,-99.215,15,121,Estado de México,Cuautitlán Izcalli,,Nodo Logistico e Industrial,Cinturon Logistico Centro,1.1,1.5
+Zona Esmeralda,19.535,-99.285,15,13,Estado de México,Atizapán de Zaragoza,,Centro de Negocios y Plusvalia,Desarrollo de Lujo Edomex,1.3,2.1
+Distrito Bosque Real,19.412,-99.295,15,37,Estado de México,Huixquilucan,,Centro de Negocios y Plusvalia,Desarrollo de Lujo Edomex,1.35,2.2
+Distrito Interlomas,19.395,-99.278,15,37,Estado de México,Huixquilucan,,Centro de Negocios y Plusvalia,Privado (Huixquilucan),1.4,2.4
+Parque Industrial Arco 57,19.9678,-99.4182,15,79,Estado de México,Soyaniquilpan,,Nodo Logistico e Industrial,Nodo Logistico Nacional,1.05,1.3
+Vesta Park Toluca,19.3414,-99.5539,15,106,Estado de México,Toluca,,Nodo Logistico e Industrial,Privado (Toluca),1.15,1.4
+Puerta Logística Bajío,20.521,-100.814,11,7,Guanajuato,Celaya,,Nodo Logistico e Industrial,PODEBI (Bajio),1,1.2
+Parque Industrial PILBA,21.0181,-101.5034,11,20,Guanajuato,Leon,,Hub de Manufactura Global,Bajio Industrial,1.1,1.2
+Parque Industrial PLATAH,19.865,-98.922,13,74,Hidalgo,Villa de Tezontepec,,Nodo Logistico e Industrial,Privado (Edomex-Hidalgo),0.95,1.2
+Polo AIFA - Tula,19.9234,-99.2156,13,10,Hidalgo,Atitalaquia,El Tablón,Nodo Logistico e Industrial,PODEBI (Plan AIFA),0.95,1.2
+Polo Zapotlán,19.832,-98.865,13,82,Hidalgo,Zapotlán de Juárez,,Nodo Logistico e Industrial,PODEBI (Hidalgo),0.9,1.2
+Refinería Miguel Hidalgo (Tula),20.061,-99.278,13,76,Hidalgo,Tula de Allende,,Infraestructura Energetica y Portuaria,Eje Energetico Central,1.1,1.2
+Zapotlán y Tula (Nuevos),19.9234,-99.2156,13,76,Hidalgo,Tula de Allende,,Nodo Logistico e Industrial,PODEBI (Plan AIFA),0.9,1.2
+Polo AIFA - Tula,19.754,-99.011,13,76,Hidalgo,Tula de Allende,,Nodo Logistico e Industrial,PODEBI (Plan AIFA),0.95,1.2
+Corredor Industrial El Salto,20.525,-103.245,14,70,Jalisco,El Salto,,Hub de Manufactura Global,Plan Industrial de Occidente,1.15,1.4
+Distrito Financiero Américas,20.695,-103.376,14,39,Jalisco,Guadalajara,,Centro de Negocios y Plusvalia,Occidente Corporativo,1.3,2
+Parque Industrial CLJ,20.455,-103.445,14,97,Jalisco,Tlajomulco de Zúñiga,,Nodo Logistico e Industrial,Privado (Nearshoring),1.1,1.3
+Puerto Vallarta (Zona Hotelera),20.655,-105.235,14,67,Jalisco,Puerto Vallarta,,Centro de Negocios y Plusvalia,Servicios de Lujo,1.15,1.9
+Puerto Vallarta Marina,20.665,-105.253,14,67,Jalisco,Puerto Vallarta,,Centro de Negocios y Plusvalia,Turismo de Lujo,1.2,2
+Silicon Valley Mexicano (ITESO),20.702,-103.388,14,120,Jalisco,Zapopan,,Ecosistema de Innovacion Tech,Hub de Innovacion Occidente,1.3,1.9
+Silicon Valley Mexicano (Zapopan),20.607,-103.415,14,98,Jalisco,Tlaquepaque,,Ecosistema de Innovacion Tech,Hub de Innovacion Occidente,1.35,2
+Polo Michoacán (Puerto),17.962,-102.215,16,52,Michoacán,Lázaro Cárdenas,,Infraestructura Energetica y Portuaria,PODEBI (Pacifico),0.95,1.1
+Polo Zamora (Berries),19.985,-102.285,16,108,Michoacán,Zamora,Zamora de Hidalgo,Agroindustria de Exportacion,Plan Agroexportador Michoacan,1,1.1
+Puerto de Lázaro Cárdenas,17.962,-102.215,16,52,Michoacán,Lázaro Cárdenas,,Infraestructura Energetica y Portuaria,Plan Maestro Pacifico,1.1,1.3
+Polo Morelos (Ciencia/Tech),18.921,-99.231,17,7,Morelos,Cuernavaca,,Ecosistema de Innovacion Tech,Plan Innovacion Centro,1.05,1.5
+Distrito de Innovación Tec Monterrey,25.652,-100.291,19,39,Nuevo León,Monterrey,,Ecosistema de Innovacion Tech,Distrito Tec,1.3,2.1
+Distrito Valle del Campestre,25.6515,-100.357,19,19,Nuevo León,San Pedro Garza García,,Centro de Negocios y Plusvalia,Desarrollo Metropolitano MTY,1.5,2.5
+Parque Industrial FINSA,25.678,-100.461,19,48,Nuevo León,Santa Catarina,,Hub de Manufactura Global,Plan Tesla / Nearshoring,1.25,1.3
+Polo Santa Catarina (Tesla Site),25.674,-100.463,19,48,Nuevo León,Santa Catarina,,Hub de Manufactura Global,Plan Tesla / Nearshoring,1.3,1.4
+Polo Matías Romero,16.8778,-95.0403,20,57,Oaxaca,Matías Romero,,Nodo Logistico e Industrial,CIIT (Corredor Interoceanico),0.85,1
+Polo Salina Cruz,16.2084,-95.1843,20,79,Oaxaca,Salina Cruz,Salina Cruz,Infraestructura Energetica y Portuaria,CIIT (Corredor Interoceanico),1.1,1.3
+Distrito Financiero Angelópolis,19.005,-98.242,21,114,Puebla,Puebla,,Centro de Negocios y Plusvalia,Desarrollo Urbano Puebla,1.25,2
+Polo Ciudad Modelo (Audi),19.2435,-97.7712,21,127,Puebla,San José Chiapa,,Hub de Manufactura Global,Ecosistema Audi,1.05,1.1
+Agroparque Bernal,20.745,-99.945,22,7,Querétaro,Ezequiel Montes,,Agroindustria de Exportacion,Plan Agroindustrial 2030,1,1.1
+Cluster Aeroespacial Galeras,20.622,-100.185,22,5,Querétaro,Colón,Galeras,Ecosistema de Innovacion Tech,Plan Estrategico Queretaro,1.15,1.5
+Hub de Data Centers El Marqués,20.655,-100.325,22,11,Querétaro,El Marqués,Parque Industrial Queretaro,Ecosistema de Innovacion Tech,Plan Queretaro Digital,1.2,1.7
+Parque Industrial TAE (Aeroespacial),20.592,-100.395,22,11,Querétaro,El Marqués,,Ecosistema de Innovacion Tech,Privado (Queretaro),1.15,1.4
+Aeropuerto Internacional Cancún,21.036,-86.877,23,5,Quintana Roo,Benito Juárez,,Nodo Logistico e Industrial,Hub Internacional Sureste,1.25,1.8
+Distrito Puerto Cancún,21.141,-86.804,23,5,Quintana Roo,Benito Juárez,,Centro de Negocios y Plusvalia,Desarrollo Turistico Premium,1.35,2.3
+Polo Chetumal (Zona Libre),18.5046,-88.3031,23,4,Quintana Roo,Othón P. Blanco,Chetumal,Nodo Logistico e Industrial,PODEBI (Frontera Sur),0.9,1.2
+Ukana Playa del Carmen,20.628,-87.078,23,8,Quintana Roo,Solidaridad,,Centro de Negocios y Plusvalia,Desarrollo Riviera Maya 2026,1.25,1.9
+Parque Industrial Logistik,21.9421,-100.8353,24,50,San Luis Potosí,Villa de Reyes,,Nodo Logistico e Industrial,Eje Industrial Central,1.1,1.3
+Polo San Luis Potosí (Emergente),22.152,-100.985,24,28,San Luis Potosí,San Luis Potosí,,Hub de Manufactura Global,Plan San Luis 2030,1.05,1.2
+San Luis Potosí Sur (Logistik),21.8486,-100.8719,24,50,San Luis Potosí,Villa de Reyes,Laguna de San Vicente,Hub de Manufactura Global,Eje Industrial Central,1.1,1.3
+Zona Industrial de San Luis Potosí,22.115,-100.905,24,28,San Luis Potosí,San Luis Potosí,,Hub de Manufactura Global,Manufactura Global SLP,1.15,1.4
+Polo Mazatlán (Logístico/Aero),23.232,-106.417,25,12,Sinaloa,Mazatlán,,Infraestructura Energetica y Portuaria,Proyecto MZT Aerospace,1.1,1.4
+Polo Sinaloa (Agrícola Tech),24.795,-107.385,25,6,Sinaloa,Culiacán,,Agroindustria de Exportacion,Plan Soberania Alimentaria,0.95,1
+Polo Topolobampo,25.5947,-109.0528,25,1,Sinaloa,Ahome,,Nodo Logistico e Industrial,PODEBI (Sinaloa),0.95,1.1
+Plan Sonora (Fotovoltaica),31.305,-113.505,26,48,Sonora,Puerto Peñasco,,Infraestructura Energetica y Portuaria,Plan Sonora Energias Limpias,1.1,1.1
+Polo Hermosillo (Chips),29.073,-110.9559,26,30,Sonora,Hermosillo,,Ecosistema de Innovacion Tech,Plan Sonora,1.15,1.5
+Polo Puerto Libertad,29.905,-112.685,26,47,Sonora,Pitiquito,,Infraestructura Energetica y Portuaria,Proyecto Saguaro (GNL),1.1,1.2
+Puerto de Guaymas,27.915,-110.895,26,29,Sonora,Guaymas,,Infraestructura Energetica y Portuaria,Plan Sonora,1.05,1.2
+Refinería Olmeca (Dos Bocas),18.423,-93.208,27,14,Tabasco,Paraíso,,Infraestructura Energetica y Portuaria,Plan Nacional de Refinacion,1.2,1.2
+Parque Industrial Oradel,27.4851,-99.6105,28,27,Tamaulipas,Nuevo Laredo,,Nodo Logistico e Industrial,Frontera de Exportacion,1.15,1.4
+Polo Altamira (Petroquímico),22.4042,-97.9351,28,3,Tamaulipas,Altamira,,Infraestructura Energetica y Portuaria,Eje Logistico Golfo Norte,1.15,1.4
+Puerto de Altamira,22.4042,-97.9351,28,22,Tamaulipas,Altamira,,Infraestructura Energetica y Portuaria,Eje Logistico Golfo Norte,1.1,1.3
+Puerto de Matamoros,25.201,-97.505,28,13,Tamaulipas,Matamoros,,Infraestructura Energetica y Portuaria,Desarrollo Maritimo Tamaulipas,1.05,1.2
+Polo Huamantla,19.312,-97.925,29,13,Tlaxcala,Huamantla,,Hub de Manufactura Global,PODECOBIS (Tlaxcala),1,1.1
+Polo Tlaxcala (Manufactura),19.316,-98.193,29,33,Tlaxcala,Tlaxcala,,Hub de Manufactura Global,PODECOBIS (Tlaxcala),0.95,1
+Polo Coatzacoalcos I,18.0683,-94.398,30,39,Veracruz,Coatzacoalcos,,Infraestructura Energetica y Portuaria,CIIT (Corredor Interoceanico),1.05,1.2
+Polo Coatzacoalcos II,18.1065,-94.3312,30,39,Veracruz,Coatzacoalcos,,Hub de Manufactura Global,CIIT (Corredor Interoceanico),1,1.1
+Polo San Juan Evangelista,17.8767,-95.1378,30,142,Veracruz,San Juan Evangelista,,Agroindustria de Exportacion,CIIT (Corredor Interoceanico),0.85,1
+Polo Texistepec,17.8931,-94.8117,30,171,Veracruz,Texistepec,Texistepec,Hub de Manufactura Global,CIIT (Corredor Interoceanico),0.9,1
+Puerto de Veracruz (Ampliación),19.201,-96.14,30,193,Veracruz,Veracruz,,Infraestructura Energetica y Portuaria,Ampliacion Puerto Veracruz,1.1,1.3
+Cabo Norte / Altabrisa,21.035,-89.585,31,50,Yucatán,Mérida,,Centro de Negocios y Plusvalia,Crecimiento Urbano Merida,1.2,1.8
+Ciudad Central Progreso,21.215,-89.625,31,59,Yucatán,Progreso,,Centro de Negocios y Plusvalia,Ecosistema Puerto Progreso,1.1,1.5
+Parque Industrial Mérida UMAN,20.882,-89.745,31,101,Yucatán,Umán,,Nodo Logistico e Industrial,Privado (Sureste),1,1.3
+Puerto Progreso (Ampliación),21.285,-89.665,31,59,Yucatán,Progreso,,Infraestructura Energetica y Portuaria,Plan Maestro Progreso,1.1,1.3
+Vía Montejo,21.041,-89.628,31,50,Yucatán,Mérida,,Centro de Negocios y Plusvalia,Crecimiento Urbano Merida,1.15,1.8
+Polo Zacatecas (Minería Tech),22.771,-102.583,32,56,Zacatecas,Zacatecas,,Infraestructura Energetica y Portuaria,Plan Minero Nacional,1.05,1.3
