@@ -66,7 +66,7 @@ for (ent in ENTIDADES ){
   # Supuesto base: 1 Domicilio = 1 Hogar principal.
   # El reto: Repartir la POBTOT exacta de la manzana entre estos hogares.
   
-  marco_hogares <- viviendas%>%filter(POBTOT>0) %>%
+  marco_hogares <- viviendas %>% filter(POBTOT>0) %>%
     st_drop_geometry() %>% # Soltamos la geometría para acelerar el procesamiento de tablas
     group_by(CVEGEO, CVE_ENT, CVE_MUN, CVE_LOC, CVE_AGEB, CVE_MZA, AMBITO) %>%
     mutate(
@@ -81,7 +81,8 @@ for (ent in ENTIDADES ){
       TOTAL_INTEGRANTES = INTEGRANTES_BASE + ifelse(RECIBE_EXTRA, 1, 0),
       # Generamos la llave primaria del hogar
       ID_HOGAR = str_pad(row_number(), width = 3, side = "left", pad = "0")
-    ) %>% ungroup() %>% select(CVEGEO, CVE_ENT, CVE_MUN, CVE_LOC, CVE_AGEB, CVE_MZA, AMBITO, 
+    ) %>% ungroup() %>% filter(TOTAL_INTEGRANTES > 0) %>% 
+    select(CVEGEO, CVE_ENT, CVE_MUN, CVE_LOC, CVE_AGEB, CVE_MZA, AMBITO, 
                                ID_HOGAR, ID_DOMICILIO, TOTAL_INTEGRANTES)
   
   file1  <- paste0("/home/rstudio/data/processed/LocRur/", ent, "_HOG.parquet")
@@ -92,7 +93,7 @@ for (ent in ENTIDADES ){
   # =========================================================
   # MARCO 3: CLIENTES POTENCIALES (La Capa Demográfica)
   # =========================================================
-  marco_clientes <- marco_hogares %>%
+  marco_clientes <- marco_hogares %>% 
     # La magia de tidyr: si un hogar tiene 4 integrantes, clona la fila 4 veces
     uncount(TOTAL_INTEGRANTES) %>%
     group_by(ID_HOGAR) %>%
