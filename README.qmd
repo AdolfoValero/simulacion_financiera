@@ -4,12 +4,21 @@ format:
   gfm:
     toc: true
     number-sections: true
+execute:
+  message: false
+  warning: false
+  echo: false
 ---
+
+
 
 # simulacion_financiera
 Creación de una cartera de clientes usando PySpark para entrenamiento de modelos economicos e implementación de data-streaming y MLOps.
 
 ```{r}
+#| echo: false
+#| message: false
+#| warning: false
 
 
 library(arrow)
@@ -19,7 +28,7 @@ library(h3jsr)
 library(ggplot2)
 
 # 1. Configuración de variables
-file_path <- "C:/Users/TheAdolf/DOCKER/Simulacion_financiera/data/processed/DENUExCENECO.parquet"
+file_path <- "InfoEconoMex.parquet"
 
 Ylims <- c(  21.6,   22.5)
 Xlims <- c(-103, -101.7)
@@ -30,10 +39,10 @@ df <- read_parquet(file_path) %>%
   filter(longitud >= bbox_ags["xmin"], longitud <= bbox_ags["xmax"],
          latitud >= bbox_ags["ymin"], latitud <= bbox_ags["ymax"])
 
-file_path <- "C:/Users/TheAdolf/DOCKER/Simulacion_financiera/data/raw/MGEN/mg_2025_integrado/CD/00ent.shp"
+file_path <- "00ent.shp"
 
 bbox_ags <- st_as_sfc(st_bbox(bbox_ags, crs = 4326))
-mexico <- st_read(file_path) %>% st_transform(4326)
+mexico <- st_read(file_path, quiet = TRUE) %>% st_transform(4326)
 mexico_ags <- st_crop(mexico, bbox_ags)
 
 # 3. Función para procesar H3 y agregar métricas
@@ -70,9 +79,10 @@ res3 <- process_h3(df, 6)
 
 
 library(ggplot2)
+```
 
 
-
+```{r}
 ggplot() +
   geom_sf(data = res1, aes(fill = 100*H001A), alpha = 0.4) +# Capa 1: Base (ej. Resolución 7)
   geom_sf(data = res2, aes(fill = 100*H001A), alpha = 0.6) +# Capa 2: Intermedia (ej. Resolución 8)
