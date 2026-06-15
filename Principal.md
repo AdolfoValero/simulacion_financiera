@@ -148,7 +148,7 @@ ggplot() +
     Warning in scale_fill_viridis_c(option = "magma", trans = "log10", name =
     "H001A (Log)"): log-10 transformation introduced infinite values.
 
-![](README_files/figure-commonmark/unnamed-chunk-1-1.png)
+![](Principal_files/figure-commonmark/unnamed-chunk-1-1.png)
 
 ``` r
 # st_write(data_h3_9, "denue_h3_res9.gpkg")
