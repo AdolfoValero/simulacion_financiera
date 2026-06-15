@@ -11,6 +11,7 @@ services:
     volumes:
       - ./data:/home/rstudio/data
       - ./src:/home/rstudio/src
+      - ./scripts:/home/rstudio/scripts
 
   # 2. La máquina de Python
   pyspark:
@@ -21,6 +22,10 @@ services:
         - JUPYTER_TOKEN=admin  # Ahora tu contraseña será "admin"
       volumes:
         - ./data:/home/jovyan/data
+        - ./src:/home/jovyan/src
+        - ./scripts:/home/jovyan/scripts
+
+        
 
 
 

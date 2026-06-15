@@ -7,6 +7,10 @@ RUN apt-get update && apt-get install -y \
     libcurl4-openssl-dev \
     libxml2-dev \
     libglpk-dev \
+    libudunits2-dev \
+    libgdal-dev \
+    libgeos-dev \
+    libproj-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # 3. Abrir R e instalar paquetes (usando binarios de Posit para Ubuntu Jammy)
