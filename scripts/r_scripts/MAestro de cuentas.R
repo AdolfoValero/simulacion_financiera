@@ -27,25 +27,48 @@ for (ent in ENTIDADES ){
       TVIVPAR = coalesce(TVIVPAR, 3),    
       VIVPAR_HAB = coalesce(VIVPAR_HAB, 3),
       POBTOT = coalesce(POBTOT, 11),
-      TOTHOG = coalesce(TOTHOG, 3)
+      TOTHOG = (VIVPAR_HAB>0)*coalesce(TOTHOG, 3)
     )
   
   manzanas  <- manzanas%>% filter(VIVTOT > 0)
   
   plan(multisession, workers = parallel::detectCores() - 1)
   on.exit(plan(sequential))
+  mun <- "0100100010229008"
   listaGEO   <- as.list(manzanas$CVEGEO)
   
   lista_resultados <- 
     future_map(listaGEO, function(mun) {
       manzanas_mun <- manzanas %>% filter(CVEGEO == mun)
-      puntos_viviendas <- st_sample(manzanas_mun, size = manzanas_mun$VIVTOT, type = "regular", exact = TRUE )
-      ViviendasxMZA <- st_sf(geometry = puntos_viviendas) %>%
-      st_join(manzanas_mun %>% 
+      ViviendasxMZA <- st_sample(manzanas_mun, size =  ceiling(1.5 * manzanas_mun$VIVTOT), type = "regular", exact = TRUE )%>%
+        st_sf()
+      if(dim(ViviendasxMZA)[1]<manzanas_mun$VIVTOT[1]){
+        ViviendasxMZA <- st_sample(manzanas_mun, size =  ceiling(1.5 * manzanas_mun$VIVTOT), type = "random", exact = TRUE )%>%
+          st_sf()
+      }
+      ViviendasxMZA <-  ViviendasxMZA %>% st_join(manzanas_mun %>% 
         select(CVEGEO, CVE_ENT, CVE_MUN, CVE_LOC, CVE_AGEB, CVE_MZA, AMBITO, POBTOT, VIVTOT, TVIVHAB, TVIVPAR, VIVPAR_HAB, TOTHOG
   #             , POBFEM, POBMAS, VIVPARH_CV, TVIVPARHAB, VIVPAR_DES, VIVPAR_UT
-        ) ) %>% mutate( 
-          ID_DOMICILIO = str_pad(row_number(), width = 6, side = "left", pad = "0")) # Generamos la llave primaria física
+        ) ) %>% mutate( ID_DOMICILIO = row_number()) # Generamos la llave primaria física
+      
+      ViviendasxMZA  <- ViviendasxMZA%>%filter(ID_DOMICILIO %in% sample(ID_DOMICILIO, unique(manzanas_mun$VIVTOT)))
+      
+      ViviendasxMZA  <- 
+        ViviendasxMZA%>%mutate(ID_DOMICILIO = str_pad(row_number(), width = 6, side = "left", pad = "0"))%>%
+          mutate(ID_VPH = (row_number() <= VIVPAR_HAB )*1, HOGxVPH = 1)%>%
+          mutate(HOGxVPH = HOGxVPH*ID_VPH, ID_VPH = row_number()*ID_VPH)%>%
+          mutate(HOGxVPH = HOGxVPH + 1*(row_number()<=(TOTHOG - VIVPAR_HAB)))
+      
+      ViviendasxMZA  <- ViviendasxMZA%>%mutate(
+        PERxVIV = floor(POBTOT*(HOGxVPH/sum(HOGxVPH))),
+        PERxVIV = PERxVIV+ 1*(row_number() <= (POBTOT - sum(PERxVIV)))
+      )
+      
+      ViviendasxMZA <- 
+         ViviendasxMZA %>% mutate(PERxVIV = ifelse(is.nan(PERxVIV), POBTOT/VIVTOT, PERxVIV)) %>% 
+         mutate(PERxVIV = ifelse(is.nan(PERxVIV), 0, PERxVIV)) %>% 
+         select( CVEGEO, CVE_ENT, CVE_MUN, CVE_LOC, CVE_AGEB, CVE_MZA, AMBITO, ID_DOMICILIO, ID_VPH, 
+                 HOGxVPH, PERxVIV)
     return(ViviendasxMZA)
   })
   plan(sequential)
@@ -66,25 +89,17 @@ for (ent in ENTIDADES ){
   # Supuesto base: 1 Domicilio = 1 Hogar principal.
   # El reto: Repartir la POBTOT exacta de la manzana entre estos hogares.
   
-  marco_hogares <- viviendas %>% filter(POBTOT>0) %>%
-    st_drop_geometry() %>% # Soltamos la geometría para acelerar el procesamiento de tablas
-    group_by(CVEGEO, CVE_ENT, CVE_MUN, CVE_LOC, CVE_AGEB, CVE_MZA, AMBITO) %>%
-    mutate(
-      # Matemática para cuadrar habitantes:
-      # 1. Asignamos el promedio base truncado a todos los hogares
-      INTEGRANTES_BASE = floor(POBTOT / VIVPAR_HAB ),
-      # 2. Calculamos el residuo de personas que sobran por la división
-      RESIDUO_PERSONAS = POBTOT %% VIVPAR_HAB ,
-      # 3. Repartimos 1 persona extra a los primeros 'N' hogares hasta agotar el residuo
-      RECIBE_EXTRA = row_number() <= RESIDUO_PERSONAS,
-      # 4. Totalizamos
-      TOTAL_INTEGRANTES = INTEGRANTES_BASE + ifelse(RECIBE_EXTRA, 1, 0),
-      # Generamos la llave primaria del hogar
-      ID_HOGAR = str_pad(row_number(), width = 3, side = "left", pad = "0")
-    ) %>% ungroup() %>% filter(TOTAL_INTEGRANTES > 0) %>% 
-    select(CVEGEO, CVE_ENT, CVE_MUN, CVE_LOC, CVE_AGEB, CVE_MZA, AMBITO, 
-                               ID_HOGAR, ID_DOMICILIO, TOTAL_INTEGRANTES)
-  
+  file_gpkg  <- paste("/home/rstudio/data/processed/LocRur/", ent, "_Viv.gpkg", sep="")
+  viviendas  <- st_read(file_gpkg, stringsAsFactors = FALSE)%>% st_make_valid() 
+  viviendas  <- viviendas%>% filter(ID_VPH > 0 )
+
+  marco_hogares <- viviendas %>% st_drop_geometry() %>% uncount(HOGxVPH )%>%
+       group_by( CVEGEO, CVE_ENT, CVE_MUN, CVE_LOC, CVE_AGEB, CVE_MZA, AMBITO, ID_DOMICILIO, ID_VPH, PERxVIV)%>% 
+       mutate(ID_HOGAR = str_pad(row_number() , width = 3, side = "left", pad = "0"), TOTHOG = n()) %>% 
+    mutate(PERxHOG = floor(PERxVIV/TOTHOG), PERxHOG = PERxHOG + 1*(row_number() <= (PERxVIV - sum(PERxHOG)))           
+           ) %>% ungroup()
+  marco_hogares$TOTHOG  <- NULL
+  marco_hogares$PERxVIV <- NULL 
   file1  <- paste0("/home/rstudio/data/processed/LocRur/", ent, "_HOG.parquet")
   write_parquet(marco_hogares, file1)
   
@@ -93,26 +108,13 @@ for (ent in ENTIDADES ){
   # =========================================================
   # MARCO 3: CLIENTES POTENCIALES (La Capa Demográfica)
   # =========================================================
-  marco_clientes <- marco_hogares %>% 
-    # La magia de tidyr: si un hogar tiene 4 integrantes, clona la fila 4 veces
-    uncount(TOTAL_INTEGRANTES) %>%
-    group_by(ID_HOGAR) %>%
-    mutate(
-      NUMERO_EN_HOGAR =row_number(), 
-      ID_PERSONA = str_pad(row_number(), width = 3, side = "left", pad = "0"),
-      # Inyectamos una semilla de roles lógicos
-      ROL_HOGAR = case_when(
-        NUMERO_EN_HOGAR == 1 ~ "JEFE_FAMILIA",
-        NUMERO_EN_HOGAR == 2 ~ "CONYUGE",
-        TRUE ~ "DEPENDIENTE"
-      )
-    ) %>%
-    ungroup() %>%
-    select(CVEGEO, CVE_ENT, CVE_MUN, CVE_LOC, CVE_AGEB, CVE_MZA, AMBITO, 
-           ID_PERSONA, ID_HOGAR, ROL_HOGAR)  
+  marco_clientes <- marco_hogares %>% uncount(PERxHOG) %>%
+    group_by( CVEGEO, CVE_ENT, CVE_MUN, CVE_LOC, CVE_AGEB, CVE_MZA, AMBITO, ID_DOMICILIO, ID_VPH, ID_HOGAR )%>% 
+    mutate(ID_PER = str_pad(row_number() , width = 3, side = "left", pad = "0"))
+  marco_hogares <- marco_clientes %>% ungroup()
   
   file1  <- paste0("/home/rstudio/data/processed/LocRur/", ent, "_POB.parquet")
-  write_parquet(marco_hogares, file1)
+  write_parquet(marco_clientes, file1)
 
 }
 

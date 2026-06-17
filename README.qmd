@@ -18,7 +18,131 @@ Creación de una cartera de clientes usando PySpark para entrenamiento de modelo
 
 # Representacion de la información geo-referenciada.
 
-A continuación presentamos la información agregada de la variable "H001A: Personal ocupado total" del Censo Económico, esta variable y otras como el ingreso estimado nos permitirán estimar variables como los coeficientes de fricción, indice de entropía, tasa de resiliencia, masa salarial latente y población flotante diurna entre otros.
+A continuación presentamos la información agregada de la variable "H001A: Personal ocupado total" del Censo Económico, para el caso de Aguascalientes, esta variable y otras como el ingreso estimado nos permitirán estimar variables como los coeficientes de fricción, indice de entropía, tasa de resiliencia, masa salarial latente y población flotante diurna entre otros.
+
+Esas variables nos permitirán perfilar clientes y productos de cualquier tipo para simular de forma "real" una base de datos con diferentes operaciones, transacciones y registros de interes educativo.
+
+
+
+```{r}
+#| eval: false
+#| echo: false
+#| message: false
+#| warning: false
+
+library(data.table)
+library(arrow)
+library(h3jsr) # Requerido para la indexación espacial
+library(sf)
+
+DENUE_MICRO <- as.data.table(read_parquet("data/processed/DENUExCENECO.parquet"))
+
+# -------------------------------------------------------------------------
+matriz_coords <- as.matrix(DENUE_MICRO[, .(longitud, latitud)])
+
+lvl  <- 8
+for (lvl in 3){
+    DENUE_MICRO[, H3_Index := point_to_cell(matriz_coords, res = lvl)] 
+    DENUE_MICRO[, Densidad_Unidades := .N, by = H3_Index]
+    DENUE_MICRO[, Log_Densidad := log(Densidad_Unidades + 1)]
+    DENUE_MICRO[, Factor_Hacinamiento := 1 + ( (Log_Densidad - min(Log_Densidad)) / 
+                                                 (max(Log_Densidad) - min(Log_Densidad)) ) * 0.5]
+    
+    # B) Componente de Capacidad
+    DENUE_MICRO[, Friccion_Cap := fifelse(is.na(H001A) | H001A == 0, 1.00, exp(-0.02 * H001A))]
+    DENUE_MICRO[, Friccion_Cap := pmax(Friccion_Cap, 0.05)]
+    
+    # C y D) Fusión y Re-escalamiento
+    DENUE_MICRO[, Friccion_Base := Friccion_Cap * Factor_Hacinamiento]
+    DENUE_MICRO[, Friccion_Base := (Friccion_Base - min(Friccion_Base)) / 
+                  (max(Friccion_Base) - min(Friccion_Base))]
+    
+    DENUE_MICRO[, c("Densidad_Unidades", "Log_Densidad", "Factor_Hacinamiento", "Friccion_Cap") := NULL]
+    
+    # -------------------------------------------------------------------------
+    # 2. Generación de Vulnerabilidad al Efectivo (is_cash)
+    DENUE_MICRO[, cash_base := fcase(
+      substr(codigo_act, 1, 2) %in% c("46", "72", "81"), 1.0,  
+      substr(codigo_act, 1, 2) %in% c("43", "48", "49"), 0.5,  
+      substr(codigo_act, 1, 2) %in% c("31", "32", "33", "51", "52", "55"), 0.1, 
+      default = 0.3 
+    )]
+    
+    DENUE_MICRO[, is_cash := cash_base * exp(-0.01 * H001A)]
+    DENUE_MICRO[, is_cash := pmax(is_cash, 0.05)] 
+    DENUE_MICRO[, cash_base := NULL]
+    
+    # -------------------------------------------------------------------------
+    # 3. Generación de Motores (is_ancla) y Volatilidad (is_espuma)
+    DENUE_MICRO[, is_ancla := fcase(
+      is.na(H001A) | H001A == 0, 0.0,
+      H001A >= 100, 1.0, 
+      substr(codigo_act, 1, 3) == "462" & H001A >= 30, 1.0, 
+      substr(codigo_act, 1, 3) %in% c("611", "622") & H001A >= 50, 1.0,
+      substr(codigo_act, 1, 3) == "522" & H001A >= 20, 1.0,
+      default = 0.0
+    )]
+    
+    DENUE_MICRO[, is_espuma := fcase(
+      is.na(H001A) | H001A == 0, 1.0, 
+      H001A <= 5 & substr(codigo_act, 1, 2) %in% c("46", "72", "81"), 1.0, 
+      default = 0.0        
+    )]
+    
+    # -------------------------------------------------------------------------
+    # 4. Entropía y Mixed-Use (Simplificado a un solo nivel H3)
+    # A) Entropía Sectorial por Hexágono
+    aux_entropia <- DENUE_MICRO[H001A > 0, .(PerOcu_Rama = sum(H001A, na.rm = TRUE)),
+                                      by = .(H3_Index, RAMA = substr(codigo_act, 1, 4))]
+    aux_entropia[, P_s := PerOcu_Rama / sum(PerOcu_Rama), by = H3_Index]
+    idx_entropia_h3 <- aux_entropia[, .(Indice_Entropia = -sum(P_s * log(P_s))), by = H3_Index]
+    # B) Mixed-Use Ponderado por Fricción
+    aux_mixed <- DENUE_MICRO[, .(Num_Unidades = .N,
+                                 Friccion_Prom = mean(Friccion_Base)),
+                             by = .(H3_Index, SECTOR = substr(codigo_act, 1, 2))]
+    aux_mixed[, M_c := Num_Unidades / sum(Num_Unidades), by = H3_Index]
+    idx_mixed_h3 <- aux_mixed[, .(Mixed_Use_Score = (1 - sum(M_c^2)) * mean(Friccion_Prom)), by = H3_Index]
+    
+    # -------------------------------------------------------------------------
+    # 5. Agregación Maestra (El nodo espacial definitivo es H3_Index)
+    TABLA_CLUSTERS <- DENUE_MICRO[, .(
+      # 1. Variables de Volumen
+      Pob_Flotante = sum(H001A, na.rm = TRUE),      Masa_Salarial = sum(J000A, na.rm = TRUE),
+      # 2. Variables de Riesgo y Estructura
+      Indice_Zombificacion = 1 - (sum(H001A > 0, na.rm = TRUE) / .N),
+      Vuln_Efectivo = sum(is_cash * H001A, na.rm = TRUE) / sum(H001A + 1e-9, na.rm = TRUE),
+      
+      # 3. Componentes para Índices Ponderados
+      Tot_Ancla  = sum(H001A * is_ancla, na.rm = TRUE),      Tot_Espuma = sum(H001A * is_espuma, na.rm = TRUE),
+      
+      # 4. Parámetros de Atracción y Fricción
+      Lat_polo = sum(latitud * H001A, na.rm = TRUE) / sum(H001A + 1e-9, na.rm = TRUE),
+      Lon_polo = sum(longitud * H001A, na.rm = TRUE) / sum(H001A + 1e-9, na.rm = TRUE),
+      FAC_SOCECO = log10(1 + sum(J000A, na.rm = TRUE)) * 0.05,
+      VAL_FRIC   = sum(Friccion_Base * H001A, na.rm = TRUE) / sum(H001A + 1e-9, na.rm = TRUE)
+    ), by = .(H3_Index)]
+    
+    # Cálculo de Índices derivados
+    TABLA_CLUSTERS[, Tasa_Resiliencia := log(1 + fifelse(Tot_Espuma == 0, Tot_Ancla, Tot_Ancla / Tot_Espuma))]
+    TABLA_CLUSTERS[, c("Tot_Ancla", "Tot_Espuma") := NULL]
+    
+    # Fusión con los índices de diversidad
+    TABLA_CLUSTERS[idx_entropia_h3, Indice_Entropia := i.Indice_Entropia, on = "H3_Index"]
+    TABLA_CLUSTERS[idx_mixed_h3, Mixed_Use_Score := i.Mixed_Use_Score, on = "H3_Index"]
+    
+    # Relleno de NAs estructurales y limpieza
+    cols_idx <- c("Indice_Entropia", "Mixed_Use_Score")
+    TABLA_CLUSTERS[, (cols_idx) := lapply(.SD, function(x) fifelse(is.na(x), 0, x)), .SDcols = cols_idx]
+    
+    # Filtro final: Conservar polígonos válidos con actividad económica comprobable
+    TABLA_CLUSTERS <- TABLA_CLUSTERS[!is.na(H3_Index) & Indice_Entropia > 0 & Pob_Flotante > 0]
+    write.csv(TABLA_CLUSTERS, file=paste0("data/processed/MasasEconomicas H3-",lvl,".csv"), row.names=FALSE)
+}
+rm(matriz_coords) # Limpiamos la matriz de la memoria
+
+```
+
+
 
 
 ```{r}
@@ -26,80 +150,151 @@ A continuación presentamos la información agregada de la variable "H001A: Pers
 #| message: false
 #| warning: false
 
-
-library(arrow)
-library(dplyr)
-library(sf)
-library(h3jsr)
-library(ggplot2)
-
-# 1. Configuración de variables
-file_path <- "InfoEconoMex.parquet"
-
-Ylims <- c(  21.6,   22.5)
-Xlims <- c(-103, -101.7)
-bbox_ags <- c(xmin = Xlims[1], ymin = Ylims[1], xmax = Xlims[2], ymax = Ylims[2])
-
-# 2. Lectura eficiente y filtrado espacial inmediato
-df <- read_parquet(file_path) %>%
-  filter(longitud >= bbox_ags["xmin"], longitud <= bbox_ags["xmax"],
-         latitud >= bbox_ags["ymin"], latitud <= bbox_ags["ymax"])
-
-file_path <- "00ent.shp"
-
-bbox_ags <- st_as_sfc(st_bbox(bbox_ags, crs = 4326))
-mexico <- st_read(file_path, quiet = TRUE) %>% st_transform(4326)
-mexico_ags <- st_crop(mexico, bbox_ags)
-
-# 3. Función para procesar H3 y agregar métricas
-process_h3 <- function(data, res) {
-# 1. Resumen de datos usando la función correcta: point_to_cell
-  resumen <- data %>%
-    mutate(cell = point_to_cell(cbind(longitud, latitud), res = res)) %>%
-    group_by(cell) %>%
-    summarise(
-      H001A = mean(H001A, na.rm = TRUE),
-      J000A = mean(J000A, na.rm = TRUE),
-      P000A = mean(P000A, na.rm = TRUE),
-      .groups = "drop"
-    )
-  
-  # 2. Convertir los índices (cell) a polígonos usando la función correcta: cell_to_polygon
-  # cell_to_polygon toma el vector de celdas y devuelve una lista de polígonos
-  poligonos <- cell_to_polygon(resumen$cell)
-  
-  # 3. Convertir a sf
-  # cell_to_polygon usualmente devuelve un sfc (simple feature collection)
-  resultado <- st_sf(resumen, geometry = poligonos)
-  
-  # Asegurar el sistema de coordenadas
-  st_crs(resultado) <- 4326
-  
-  return(resultado)
-  }
-
-# 4. Ejecución para resoluciones 7, 8 y 9
-res1 <- process_h3(df, 4)
-res2 <- process_h3(df, 5)
-res3 <- process_h3(df, 6)
+# 1. Cargar las librerías necesarias
+require(data.table)
+require(sf)
+require(ggplot2)
+require(h3jsr) # Indispensable para interpretar los códigos H3
 
 
-library(ggplot2)
+lvl <- 4
+
+TABLA_CLUSTERS   <- as.data.table(read.csv(file=paste0("data/processed/MasasEconomicas H3-", lvl, ".csv")))
+
+# 2. Extraer los IDs únicos y convertirlos a polígonos sf
+# Usamos cell_to_polygon() que es la función moderna de h3jsr para esto.
+# simple = FALSE nos devuelve un data.frame espacial (sf) en lugar de una lista suelta.
+poligonos_h3 <- cell_to_polygon(TABLA_CLUSTERS$H3_Index, simple = FALSE)
+
+# Nota: El objeto 'poligonos_h3' tendrá una columna llamada "h3_index" (en minúsculas) 
+# y otra columna llamada "geometry".
+
+# 3. Unir (Join) la tabla espacial con tus datos económicos
+# Es SUPER IMPORTANTE poner el objeto 'sf' primero (x = poligonos_h3) 
+# para que el resultado final siga siendo un mapa y no pierda sus propiedades espaciales.
+mapa_completo <- merge(
+  x = poligonos_h3, 
+  y = TABLA_CLUSTERS, 
+  by.x = "h3_address",    # Nombre de la columna en el objeto sf de h3jsr
+  by.y = "H3_Index",    # Nombre de la columna en tu data.table
+  all.x = TRUE
+)
 ```
+
+## Entropía de Shanon
+
+Valores cercanos a 0 indican monompolio sectorial (segun codigos SCIAN).
 
 
 ```{r}
+#| echo: false
+#| message: false
+#| warning: false
+
+# 4. Graficar con ggplot2
+# Vamos a graficar la Población Flotante como ejemplo, usando una escala logarítmica 
+# para que los valores extremos no opaquen al resto.
+ggplot(data = mapa_completo) +
+  geom_sf(aes(fill = Masa_Salarial ), color = "white", linewidth = 0.1) +
+  scale_fill_viridis_c(
+    option = "magma", 
+    trans = "log10", # Usa pseudo_log por si tienes valores en 0
+    name = "Masa salarial latente (log10)"
+  ) +
+  theme_void() + # Quita las coordenadas de fondo para que se vea como un mapa limpio
+  labs(
+    title = paste("Masa salarial latente - H3 Nivel", lvl),
+    subtitle = "Simulación Geofinanciera"
+  )
+```
+## Entropía de Shanon
+
+Valores cercanos a 0 indican monompolio sectorial (segun codigos SCIAN).
+
+
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+
+ggplot(data = mapa_completo) +
+  geom_sf(aes(fill = Indice_Entropia), color = "white", linewidth = 0.1) +
+  scale_fill_viridis_c(
+    option = "magma",#     trans = "log10", # Usa pseudo_log por si tienes valores en 0
+    name = "Entropía"
+  ) +
+  theme_void() + # Quita las coordenadas de fondo para que se vea como un mapa limpio
+  labs(
+    title = paste("Mapa de Entropía de Shanon - H3 Nivel", lvl),
+    subtitle = "Simulación Geofinanciera"
+  )
+
+
+
+```
+## Tasa de Resiliencia
+
+Valores Menores a 1 indican fragilidad crisis.
+
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+
+ggplot(data = mapa_completo) +
+  geom_sf(aes(fill = Tasa_Resiliencia ), color = "white", linewidth = 0.1) +
+  scale_fill_viridis_c( option = "magma", trans = "log10", # Usa pseudo_log por si tienes valores en 0
+    name = "Tasa de Resiliencia (log10)"
+  ) +
+  theme_void() + # Quita las coordenadas de fondo para que se vea como un mapa limpio
+  labs(
+    title = paste("Mapa de Tasa de Resiliencia - H3 Nivel", lvl),
+    subtitle = "Simulación Geofinanciera"
+  )
+```
+
+```{r}
+#| eval: false
+#| echo: false
+#| message: false
+#| warning: false
+
+
+library(ggplot2)
+
 ggplot() +
-  geom_sf(data = res1, aes(fill = 100*H001A), alpha = 0.4) +# Capa 1: Base (ej. Resolución 7)
-  geom_sf(data = res2, aes(fill = 100*H001A), alpha = 0.6) +# Capa 2: Intermedia (ej. Resolución 8)
-  geom_sf(data = res3, aes(fill = 100*H001A), alpha = 0.8) +# Capa 3: Superior (ej. Resolución 9)
+  geom_sf(data = res1, aes(fill = H001A), alpha = 0.4) +# Capa 1: Base (ej. Resolución 7)
+  geom_sf(data = res2, aes(fill = H001A), alpha = 0.6) +# Capa 2: Intermedia (ej. Resolución 8)
+  geom_sf(data = res3, aes(fill = H001A), alpha = 0.8) +# Capa 3: Superior (ej. Resolución 9)
   geom_sf(data = mexico, fill = NA, color="green") +# Capa 1: Base (ej. Resolución 7)
   coord_sf(xlim = Xlims, ylim = Ylims) + 
-  scale_fill_viridis_c(option = "magma", trans = "log10", name = "H001A (Log)") + 
+  scale_fill_viridis_c(option = "magma", name = "H001A (Log)") + 
   labs(title = "Comparativa de resoluciones H3")
+
+
+ggplot() +
+  # 1. Fondo territorial claro y limpio
+  geom_sf(data = mexico, fill = "#F4F6F6", color = "#D5DBDB") + 
+  # 2. Malla Macro (Res 7) muy sutil (usar linewidth en vez de size en versiones nuevas de R)
+  geom_sf(data = res1, fill = NA, color = "#ABB2B9", linewidth = 0.4) + 
+  # 3. Capa Micro (Res 9)
+  geom_sf(data = res3, aes(fill = H001A), color = NA) + 
+  coord_sf(xlim = Xlims, ylim = Ylims) + 
+  # Usar "viridis" o "plasma" sobre fondo blanco resalta mucho más
+  scale_fill_viridis_c(    option = "magma", 
+    trans = "log10", # Tolera los ceros sin romper el mapa
+    na.value = "transparent", # Si hay NAs, que no pinten manchas negras
+    name = "Empleados\n(H001A)"  ) + 
+  theme_void() +   theme(
+    panel.background = element_rect(fill = "white", color = NA),
+    legend.position = "right"
+  ) +  labs(title = "Densidad de Personal Ocupado (Nivel 9)")
 
 # st_write(data_h3_9, "denue_h3_res9.gpkg")
 
 
 ```
+
 
