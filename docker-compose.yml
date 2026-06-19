@@ -1,9 +1,14 @@
-name: Simulacion_financiera  # Este nombre será fijo en Docker, sin importar cómo se llame la carpeta en Windows/Mac
+name: Simulacion_financiera
 
 services:
-  # 1. La máquina de R
-  rstudio:
-    build: ./entorno_r
+  # ---------------------------------------------------------
+  # 1. GENERADOR DE DATOS Y STREAMING (R)
+  # ---------------------------------------------------------
+  r_streaming:
+    build: 
+      context: ./entorno_r
+      dockerfile: Dockerfile
+    container_name: nodo_r
     ports:
       - "8787:8787"
     environment:
@@ -13,23 +18,62 @@ services:
       - ./src:/home/rstudio/src
       - ./scripts:/home/rstudio/scripts
 
-  # 2. La máquina de Python
-  pyspark:
-      build: ./entorno_python
-      ports:
-        - "8888:8888"
-      environment:
-        - JUPYTER_TOKEN=admin  # Ahora tu contraseña será "admin"
-      volumes:
-        - ./data:/home/jovyan/data
-        - ./src:/home/jovyan/src
-        - ./scripts:/home/jovyan/scripts
+  # ---------------------------------------------------------
+  # 2. MOTOR ETL Y DATA LAKE (PySpark)
+  # ---------------------------------------------------------
+  spark_etl:
+    build: 
+      context: ./entorno_pyspark
+      dockerfile: Dockerfile
+    container_name: nodo_spark
+    ports:
+      - "8888:8888"   # Interfaz Jupyter
+      - "9998:9998"   # Puerto TCP para recibir Clientes desde R
+      - "9999:9999"   # Puerto TCP para recibir Historial desde R
+    environment:
+      - JUPYTER_TOKEN=admin
+    volumes:
+      - ./data:/home/jovyan/data
+      - ./src:/home/jovyan/src
+      - ./scripts:/home/jovyan/scripts
 
-        
+  # ---------------------------------------------------------
+  # 3. ENTRENAMIENTO ML/DL (Python + NVIDIA GPU)
+  # ---------------------------------------------------------
+  ml_training:
+    build: 
+      context: ./entorno_entrenamiento
+      dockerfile: Dockerfile
+    container_name: nodo_entrenamiento
+    ports:
+      - "8889:8888"   # Interfaz Jupyter (En el puerto 8889 para no chocar con Spark)
+    environment:
+      - JUPYTER_TOKEN=admin
+    volumes:
+      - ./data:/workspace/data
+      - ./src:/workspace/src
+      - ./scripts:/workspace/scripts
+    # ESTO ACTIVA TU TARJETA GRÁFICA EN EL CONTENEDOR
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
 
-
-
-
-
-
-
+  # ---------------------------------------------------------
+  # 4. INFERENCIA EN PRODUCCIÓN (Python Ligero)
+  # ---------------------------------------------------------
+  ml_produccion:
+    build: 
+      context: ./entorno_produccion
+      dockerfile: Dockerfile
+    container_name: nodo_produccion
+    ports:
+      - "8000:8000"   # Puerto de la API REST / TCP para recibir nuevos datos a predecir
+    volumes:
+      - ./data:/app/data # Para leer los modelos guardados y guardar resultados
+      - ./src:/app/src
+    # En producción corremos directamente un servidor API o un script de escucha
+    command: uvicorn src.api_produccion:app --host 0.0.0.0 --port 8000

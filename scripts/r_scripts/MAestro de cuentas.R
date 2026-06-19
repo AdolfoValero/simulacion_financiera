@@ -4,6 +4,7 @@ library(dplyr)
 library(tidyr) 
 library(furrr)
 library(stringr)
+library(h3jsr) # Librería nativa para indexación H3 en R
 
 
 # Asumiendo que manzanas_maestro ya pasó por su limpieza de NAs
@@ -116,6 +117,38 @@ for (ent in ENTIDADES ){
   file1  <- paste0("/home/rstudio/data/processed/LocRur/", ent, "_POB.parquet")
   write_parquet(marco_clientes, file1)
 
+}
+
+
+
+
+
+library(sf)
+library(arrow)
+library(dplyr)
+library(tidyr) 
+library(furrr)
+library(stringr)
+
+# Asumiendo que manzanas_maestro ya pasó por su limpieza de NAs
+ent <- "01"
+ENTIDADES <- 
+  c( "01", "02", "03", "04", "05", "06", "07", "08", "09",
+     "10", "11", "12", "13", "14", "15", "16", "17", "18", "19",
+     "20", "21", "22", "23", "24", "25", "26", "27", "28", "29",
+     "30", "31", "32")
+ent <- "02"
+for (ent in ENTIDADES ){
+  file_gpkg  <- paste0("/home/rstudio/data/processed/LocRur/", ent, "_Viv.gpkg")
+  viviendas  <- st_read(file_gpkg, stringsAsFactors = FALSE)%>% st_make_valid() %>% st_transform(crs = 4326)
+  
+  coords <- st_coordinates(viviendas)
+  viviendas$Longitud <- coords[, "X"]
+  viviendas$Latitud  <- coords[, "Y"]
+  
+  file2  <- paste0("/home/rstudio/data/processed/LocRur/", ent, "_Vivs.parquet")
+  sfarrow::st_write_parquet(viviendas, file2)
+  rm(lista_resultados);
 }
 
 

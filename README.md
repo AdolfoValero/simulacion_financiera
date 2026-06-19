@@ -1,8 +1,8 @@
 # Documentación de mi Proyecto
 
 
-- [<span class="toc-section-number">1</span>
-  simulacion_financiera](#simulacion_financiera)
+- [<span class="toc-section-number">1</span> simulacion
+  financiera](#simulacion-financiera)
 - [<span class="toc-section-number">2</span> Representacion de la
   información
   geo-referenciada.](#representacion-de-la-información-geo-referenciada)
@@ -13,23 +13,20 @@
   - [<span class="toc-section-number">2.3</span> Tasa de
     Resiliencia](#tasa-de-resiliencia)
 
-# simulacion_financiera
+# simulacion financiera
 
 Creación de una cartera de clientes usando PySpark para entrenamiento de
 modelos economicos e implementación de data-streaming y MLOps.
 
 # Representacion de la información geo-referenciada.
 
-A continuación presentamos la información agregada de la variable
-“H001A: Personal ocupado total” del Censo Económico, para el caso de
-Aguascalientes, esta variable y otras como el ingreso estimado nos
-permitirán estimar variables como los coeficientes de fricción, indice
-de entropía, tasa de resiliencia, masa salarial latente y población
-flotante diurna entre otros.
+A continuación presentamos la información agregada de distintos indices
+económicos en México, Estos coeficientes nos permitirán darle realismo
+nuestro producto, diferenciándolo de un producto puramente informático.
 
 Esas variables nos permitirán perfilar clientes y productos de cualquier
 tipo para simular de forma “real” una base de datos con diferentes
-operaciones, transacciones y registros de interes educativo.
+operaciones, transacciones y registros de interés educativo.
 
 ## Entropía de Shanon
 

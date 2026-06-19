@@ -12,15 +12,15 @@ execute:
 
 
 
-# simulacion_financiera
+# simulacion financiera
 
 Creación de una cartera de clientes usando PySpark para entrenamiento de modelos economicos e implementación de data-streaming y MLOps.
 
 # Representacion de la información geo-referenciada.
 
-A continuación presentamos la información agregada de la variable "H001A: Personal ocupado total" del Censo Económico, para el caso de Aguascalientes, esta variable y otras como el ingreso estimado nos permitirán estimar variables como los coeficientes de fricción, indice de entropía, tasa de resiliencia, masa salarial latente y población flotante diurna entre otros.
+A continuación presentamos la información agregada de distintos indices económicos en México, Estos coeficientes nos permitirán darle realismo nuestro producto, diferenciándolo de un producto puramente informático.
 
-Esas variables nos permitirán perfilar clientes y productos de cualquier tipo para simular de forma "real" una base de datos con diferentes operaciones, transacciones y registros de interes educativo.
+Esas variables nos permitirán perfilar clientes y productos de cualquier tipo para simular de forma "real" una base de datos con diferentes operaciones, transacciones y registros de interés educativo.
 
 
 
@@ -42,7 +42,8 @@ matriz_coords <- as.matrix(DENUE_MICRO[, .(longitud, latitud)])
 
 lvl  <- 8
 for (lvl in 3){
-    DENUE_MICRO[, H3_Index := point_to_cell(matriz_coords, res = lvl)] 
+    DENUE_MICRO[, H3_Index := point_to_cell(matriz_coords, res = lvl)]
+  
     DENUE_MICRO[, Densidad_Unidades := .N, by = H3_Index]
     DENUE_MICRO[, Log_Densidad := log(Densidad_Unidades + 1)]
     DENUE_MICRO[, Factor_Hacinamiento := 1 + ( (Log_Densidad - min(Log_Densidad)) / 
@@ -158,6 +159,7 @@ require(h3jsr) # Indispensable para interpretar los códigos H3
 
 
 lvl <- 4
+
 
 TABLA_CLUSTERS   <- as.data.table(read.csv(file=paste0("data/processed/MasasEconomicas H3-", lvl, ".csv")))
 

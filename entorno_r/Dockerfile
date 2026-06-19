@@ -14,4 +14,4 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # 3. Abrir R e instalar paquetes (usando binarios de Posit para Ubuntu Jammy)
-RUN R -e "options(repos = c(CRAN = 'https://packagemanager.posit.co/cran/__linux__/jammy/latest')); install.packages(c('dplyr', 'arrow', 'igraph'))"
+RUN R -e "options(repos = c(CRAN = 'https://packagemanager.posit.co/cran/__linux__/jammy/latest')); install.packages(c('dplyr', 'arrow', 'igraph', 'jsonlite', 'data.table'))"
