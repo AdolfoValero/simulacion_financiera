@@ -1,19 +1,19 @@
 # Documentación de mi Proyecto
 
 
-- [<span class="toc-section-number">1</span> simulacion
+- [<span class="toc-section-number">1</span> Simulacion
   financiera](#simulacion-financiera)
 - [<span class="toc-section-number">2</span> Representacion de la
   información
   geo-referenciada.](#representacion-de-la-información-geo-referenciada)
-  - [<span class="toc-section-number">2.1</span> Entropía de
-    Shanon](#entropía-de-shanon)
+  - [<span class="toc-section-number">2.1</span> Masa salarial
+    latente](#masa-salarial-latente)
   - [<span class="toc-section-number">2.2</span> Entropía de
-    Shanon](#entropía-de-shanon-1)
+    Shanon](#entropía-de-shanon)
   - [<span class="toc-section-number">2.3</span> Tasa de
     Resiliencia](#tasa-de-resiliencia)
 
-# simulacion financiera
+# Simulacion financiera
 
 Creación de una cartera de clientes usando PySpark para entrenamiento de
 modelos economicos e implementación de data-streaming y MLOps.
@@ -28,9 +28,9 @@ Esas variables nos permitirán perfilar clientes y productos de cualquier
 tipo para simular de forma “real” una base de datos con diferentes
 operaciones, transacciones y registros de interés educativo.
 
-## Entropía de Shanon
+## Masa salarial latente
 
-Valores cercanos a 0 indican monompolio sectorial (segun codigos SCIAN).
+Valores cercanos a 0 indican monopolio sectorial (según códigos SCIAN).
 
 ![](README_files/figure-commonmark/unnamed-chunk-3-1.png)
 

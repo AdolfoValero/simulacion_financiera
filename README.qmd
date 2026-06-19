@@ -12,7 +12,7 @@ execute:
 
 
 
-# simulacion financiera
+# Simulacion financiera
 
 Creación de una cartera de clientes usando PySpark para entrenamiento de modelos economicos e implementación de data-streaming y MLOps.
 
@@ -159,8 +159,6 @@ require(h3jsr) # Indispensable para interpretar los códigos H3
 
 
 lvl <- 4
-
-
 TABLA_CLUSTERS   <- as.data.table(read.csv(file=paste0("data/processed/MasasEconomicas H3-", lvl, ".csv")))
 
 # 2. Extraer los IDs únicos y convertirlos a polígonos sf
@@ -183,9 +181,9 @@ mapa_completo <- merge(
 )
 ```
 
-## Entropía de Shanon
+## Masa salarial latente
 
-Valores cercanos a 0 indican monompolio sectorial (segun codigos SCIAN).
+Valores cercanos a 0 indican monopolio sectorial (según códigos SCIAN).
 
 
 ```{r}
