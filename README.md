@@ -6,12 +6,6 @@
 - [<span class="toc-section-number">2</span> Representacion de la
   información
   geo-referenciada.](#representacion-de-la-información-geo-referenciada)
-  - [<span class="toc-section-number">2.1</span> Masa salarial
-    latente](#masa-salarial-latente)
-  - [<span class="toc-section-number">2.2</span> Entropía de
-    Shanon](#entropía-de-shanon)
-  - [<span class="toc-section-number">2.3</span> Tasa de
-    Resiliencia](#tasa-de-resiliencia)
 
 # Simulacion financiera
 
@@ -42,23 +36,26 @@ Esas variables nos permitirán perfilar clientes y productos de cualquier
 tipo para simular de forma “real” una base de datos con diferentes
 operaciones, transacciones y registros de interés educativo.
 
-## Masa salarial latente
+- Masa salarial latente: Valores cercanos a 0 indican monopolio
+  sectorial (según códigos SCIAN).
+- Entropía de Shanon: Valores cercanos a 0 indican monopolio sectorial
+  (según códigos SCIAN).
+- Tasa de Resiliencia: Valores Menores a 1 indican fragilidad ante la
+  crisis.
 
-Valores cercanos a 0 indican monopolio sectorial (según códigos SCIAN).
+<p align="center">
 
-<img src="figures/Masa%20Salarial.png" style="width:80.0%"
-alt="Elephant" />
+<img src="figures/Masa Salarial.png" width="48%" alt="Masa salarial" />
+<img src="figures/Entropia Shanon.png" width="48%" alt="Entropía de Shannon" />
+</p>
 
-## Entropía de Shanon
+<p align="center">
 
-Valores cercanos a 0 indican monopolio sectorial (segun codigos SCIAN).
+<img src="figures/Tasa Resiliencia.png" width="48%" alt="Tasa de Resiliencia" />
+</p>
 
-<img src="figures/Entropia%20Shanon.png" style="width:80.0%"
-alt="Elephant" />
+<p align="center">
 
-## Tasa de Resiliencia
-
-Valores Menores a 1 indican fragilidad crisis.
-
-<img src="figures/Tasa%20Resiliencia.png" style="width:80.0%"
-alt="Elephant" />
+<em><b>Figura 1:</b> Índices Económicos Simulados (Masa Salarial,
+Entropía de Shannon y Tasa de Resiliencia)</em>
+</p>

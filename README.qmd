@@ -193,9 +193,10 @@ mapa_completo <- merge(
 )
 ```
 
-## Masa salarial latente
+* Masa salarial latente: Valores cercanos a 0 indican monopolio sectorial (según códigos SCIAN).
+* Entropía de Shanon: Valores cercanos a 0 indican monopolio sectorial (según códigos SCIAN).
+* Tasa de Resiliencia: Valores Menores a 1 indican fragilidad ante la crisis.
 
-Valores cercanos a 0 indican monopolio sectorial (según códigos SCIAN).
 
 
 ```{r}
@@ -216,26 +217,9 @@ ggplot(data = mapa_completo) +
   ) +
   theme_void() + # Quita las coordenadas de fondo para que se vea como un mapa limpio
   labs(
-    title = paste("Masa salarial latente - H3 Nivel", lvl),
-    subtitle = "Simulación Geofinanciera"
+    title = paste("Masa salarial latente - H3 Nivel", lvl)#, subtitle = "Simulación Geofinanciera"
   )
-ggsave("figures/Masa Salarial.png", width = 5, height = 5)
-
-```
-
-![Elephant](figures/Masa Salarial.png){width=80%}
-
-## Entropía de Shanon
-
-Valores cercanos a 0 indican monopolio sectorial (segun codigos SCIAN).
-
-
-
-```{r}
-#| eval: false
-#| echo: false
-#| message: false
-#| warning: false
+ggsave("figures/Masa Salarial.png", width = 5, height = 3)
 
 ggplot(data = mapa_completo) +
   geom_sf(aes(fill = Indice_Entropia), linewidth = 0.1) +
@@ -245,28 +229,11 @@ ggplot(data = mapa_completo) +
   ) +
   theme_void() + # Quita las coordenadas de fondo para que se vea como un mapa limpio
   labs(
-    title = paste("Mapa de Entropía de Shanon - H3 Nivel", lvl),
-    subtitle = "Simulación Geofinanciera"
+    title = paste("Mapa de Entropía de Shanon - H3 Nivel", lvl)#, subtitle = "Simulación Geofinanciera"
   )
 
-ggsave("figures/Entropia Shanon.png", width = 5, height = 5)
+ggsave("figures/Entropia Shanon.png", width = 5, height = 3)
 
-
-```
-
-
-![Elephant](figures/Entropia Shanon.png){width=80%}
-
-## Tasa de Resiliencia
-
-Valores Menores a 1 indican fragilidad crisis.
-
-
-```{r}
-#| eval: false
-#| echo: false
-#| message: false
-#| warning: false
 
 ggplot(data = mapa_completo) +
   geom_sf(aes(fill = Tasa_Resiliencia ), linewidth = 0.1) +
@@ -275,15 +242,31 @@ ggplot(data = mapa_completo) +
   ) +
   theme_void() + # Quita las coordenadas de fondo para que se vea como un mapa limpio
   labs(
-    title = paste("Mapa de Tasa de Resiliencia - H3 Nivel", lvl),
-    subtitle = "Simulación Geofinanciera"
+    title = paste("Mapa de Tasa de Resiliencia - H3 Nivel", lvl)#, subtitle = "Simulación Geofinanciera"
   )
-ggsave("figures/Tasa Resiliencia.png", width = 5, height = 5)
+ggsave("figures/Tasa Resiliencia.png", width = 5, height = 3)
+
 
 ```
 
 
-![Elephant](figures/Tasa Resiliencia.png){width=80%}
+
+
+<p align="center">
+  <img src="figures/Masa Salarial.png" width="48%" alt="Masa salarial" />
+  <img src="figures/Entropia Shanon.png" width="48%" alt="Entropía de Shannon" />
+</p>
+
+<p align="center">
+  <img src="figures/Tasa Resiliencia.png" width="48%" alt="Tasa de Resiliencia" />
+</p>
+
+<p align="center">
+  <em><b>Figura 1:</b> Índices Económicos Simulados (Masa Salarial, Entropía de Shannon y Tasa de Resiliencia)</em>
+</p>
+
+
+
 
 ```{r}
 #| eval: false
