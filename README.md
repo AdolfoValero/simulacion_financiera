@@ -22,8 +22,8 @@ esto usaremos diferentes herramientas como:
 - Python para poner el modelo en producción.
 - Kafka para orquestar el flujo de datos entre contenedores.
 
-El siguiente diagrama ejemplifica nuestra configuración generada con
-apoyo de herramientas de IA
+El siguiente diagrama, generado con mermeid.live, ejemplifica nuestra
+configuración generada con apoyo de herramientas de IA
 <img src="figures/archdiagram.png" style="width:60.0%" alt="Elephant" />
 
 # Representacion de la información geo-referenciada.

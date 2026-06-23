@@ -92,7 +92,7 @@ for (week in 1:semana_objetivo){
     FECHAS   <- fecha_base + (week - 1) * 7 + 0:4
     
     set.seed(2026)
-    NN <- round(15000*1.05^(0.05*week/52))
+    NN <- round(20000*1.05^(0.05*week/52))
     viviendas_seleccionadas <- tabla_ids_nacional %>% 
       slice_sample(n = rbinom(1, NN, 0.8)) %>% pull(IDVIV)
     
@@ -431,3 +431,5 @@ for (week in 1:semana_objetivo){
 rm(tabla_ids_nacional)
 
 print("Puertos liberados y consola lista.")
+
+

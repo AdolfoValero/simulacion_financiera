@@ -23,7 +23,7 @@ El objetivo de este GitHub es mostrar el uso de diferentes herramientas computac
 * Python para poner el modelo en producción.
 * Kafka para orquestar el flujo de datos entre contenedores.
 
-El siguiente diagrama ejemplifica nuestra configuración generada con apoyo de herramientas de IA
+El siguiente diagrama, generado con mermeid.live, ejemplifica nuestra configuración generada con apoyo de herramientas de IA
 ![Elephant](figures/archdiagram.png){width=60%}
 
 
