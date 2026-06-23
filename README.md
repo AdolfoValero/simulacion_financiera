@@ -15,8 +15,17 @@
 
 # Simulacion financiera
 
-Creación de una cartera de clientes usando PySpark para entrenamiento de
-modelos economicos e implementación de data-streaming y MLOps.
+El objetivo de este GitHub es mostrar el uso de diferentes herramientas
+computacionales en la creación de una cartera de clientes. Para lograr
+esto usaremos diferentes herramientas como: - Docker para generar
+contenedores con las herramientas y configuraciones necesarias. - R para
+la generación de millones de registros de datos sinteticos. - PySpark y
+Delta-Lake para las operaciones ETL y almacenamiento de los millones de
+registros. - PyTorch, SciPy para entrenar modelos de ML y DL. - Python
+para poner el modelo en producción. - Kafka para orquestar el flujo de
+datos entre contenedores. El siguiente diagrama ejemplifica nuestra
+configuración generada con apoyo de herramientas de IA
+<img src="figures/archdiagram.png" style="width:60.0%" alt="Elephant" />
 
 # Representacion de la información geo-referenciada.
 
@@ -32,16 +41,19 @@ operaciones, transacciones y registros de interés educativo.
 
 Valores cercanos a 0 indican monopolio sectorial (según códigos SCIAN).
 
-![](README_files/figure-commonmark/unnamed-chunk-3-1.png)
+<img src="figures/Masa%20Salarial.png" style="width:80.0%"
+alt="Elephant" />
 
 ## Entropía de Shanon
 
-Valores cercanos a 0 indican monompolio sectorial (segun codigos SCIAN).
+Valores cercanos a 0 indican monopolio sectorial (segun codigos SCIAN).
 
-![](README_files/figure-commonmark/unnamed-chunk-4-1.png)
+<img src="figures/Entropia%20Shanon.png" style="width:80.0%"
+alt="Elephant" />
 
 ## Tasa de Resiliencia
 
 Valores Menores a 1 indican fragilidad crisis.
 
-![](README_files/figure-commonmark/unnamed-chunk-5-1.png)
+<img src="figures/Tasa%20Resiliencia.png" style="width:80.0%"
+alt="Elephant" />

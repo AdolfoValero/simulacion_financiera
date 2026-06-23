@@ -14,7 +14,16 @@ execute:
 
 # Simulacion financiera
 
-Creación de una cartera de clientes usando PySpark para entrenamiento de modelos economicos e implementación de data-streaming y MLOps.
+El objetivo de este GitHub es mostrar el uso de diferentes herramientas computacionales en la creación de una cartera de clientes. Para lograr esto usaremos diferentes herramientas como:
+   - Docker para generar contenedores con las herramientas y configuraciones necesarias.
+   - R para la generación de millones de registros de datos sinteticos.
+   - PySpark y Delta-Lake para las operaciones ETL y almacenamiento de los millones de registros.
+   - PyTorch, SciPy  para entrenar modelos de ML y DL.
+   - Python para poner el modelo en producción.
+   - Kafka para orquestar el flujo de datos entre contenedores.
+El siguiente diagrama ejemplifica nuestra configuración generada con apoyo de herramientas de IA
+![Elephant](figures/archdiagram.png){width=60%}
+
 
 # Representacion de la información geo-referenciada.
 
@@ -147,6 +156,7 @@ rm(matriz_coords) # Limpiamos la matriz de la memoria
 
 
 ```{r}
+#| eval: false
 #| echo: false
 #| message: false
 #| warning: false
@@ -187,6 +197,7 @@ Valores cercanos a 0 indican monopolio sectorial (según códigos SCIAN).
 
 
 ```{r}
+#| eval: false
 #| echo: false
 #| message: false
 #| warning: false
@@ -195,31 +206,37 @@ Valores cercanos a 0 indican monopolio sectorial (según códigos SCIAN).
 # Vamos a graficar la Población Flotante como ejemplo, usando una escala logarítmica 
 # para que los valores extremos no opaquen al resto.
 ggplot(data = mapa_completo) +
-  geom_sf(aes(fill = Masa_Salarial ), color = "white", linewidth = 0.1) +
+  geom_sf(aes(fill = Masa_Salarial ), linewidth = 0.1) +
   scale_fill_viridis_c(
     option = "magma", 
     trans = "log10", # Usa pseudo_log por si tienes valores en 0
-    name = "Masa salarial latente (log10)"
+    name = "Masa salarial\n latente (log10)"
   ) +
   theme_void() + # Quita las coordenadas de fondo para que se vea como un mapa limpio
   labs(
     title = paste("Masa salarial latente - H3 Nivel", lvl),
     subtitle = "Simulación Geofinanciera"
   )
+ggsave("figures/Masa Salarial.png", width = 5, height = 5)
+
 ```
+
+![Elephant](figures/Masa Salarial.png){width=80%}
+
 ## Entropía de Shanon
 
-Valores cercanos a 0 indican monompolio sectorial (segun codigos SCIAN).
+Valores cercanos a 0 indican monopolio sectorial (segun codigos SCIAN).
 
 
 
 ```{r}
+#| eval: false
 #| echo: false
 #| message: false
 #| warning: false
 
 ggplot(data = mapa_completo) +
-  geom_sf(aes(fill = Indice_Entropia), color = "white", linewidth = 0.1) +
+  geom_sf(aes(fill = Indice_Entropia), linewidth = 0.1) +
   scale_fill_viridis_c(
     option = "magma",#     trans = "log10", # Usa pseudo_log por si tienes valores en 0
     name = "Entropía"
@@ -230,30 +247,41 @@ ggplot(data = mapa_completo) +
     subtitle = "Simulación Geofinanciera"
   )
 
+ggsave("figures/Entropia Shanon.png", width = 5, height = 5)
 
 
 ```
+
+
+![Elephant](figures/Entropia Shanon.png){width=80%}
+
 ## Tasa de Resiliencia
 
 Valores Menores a 1 indican fragilidad crisis.
 
 
 ```{r}
+#| eval: false
 #| echo: false
 #| message: false
 #| warning: false
 
 ggplot(data = mapa_completo) +
-  geom_sf(aes(fill = Tasa_Resiliencia ), color = "white", linewidth = 0.1) +
+  geom_sf(aes(fill = Tasa_Resiliencia ), linewidth = 0.1) +
   scale_fill_viridis_c( option = "magma", trans = "log10", # Usa pseudo_log por si tienes valores en 0
-    name = "Tasa de Resiliencia (log10)"
+    name = "Tasa de \nResiliencia\n (log10)"
   ) +
   theme_void() + # Quita las coordenadas de fondo para que se vea como un mapa limpio
   labs(
     title = paste("Mapa de Tasa de Resiliencia - H3 Nivel", lvl),
     subtitle = "Simulación Geofinanciera"
   )
+ggsave("figures/Tasa Resiliencia.png", width = 5, height = 5)
+
 ```
+
+
+![Elephant](figures/Tasa Resiliencia.png){width=80%}
 
 ```{r}
 #| eval: false

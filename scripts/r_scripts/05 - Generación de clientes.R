@@ -7,13 +7,23 @@ library(lubridate)
 library(sf)
 library(h3jsr)
 library(data.table)
+library(jsonlite)
+library(kafka)
 
-ruta_delta_vivs <- "/home/rstudio/data/processed/DeltaLake/Viviendas_Nacional/"
-ruta_delta_per <- "/home/rstudio/data/processed/DeltaLake/Personas_Nacional/"
 
-setwd("C:/Users/TheAdolf/DOCKER/Simulacion_financiera/")
-ruta_lake_vivs <- "C:/Users/TheAdolf/DOCKER/Simulacion_financiera/data/processed/DeltaLake/Viviendas_Nacional/"
-ruta_lake_per <- "C:/Users/TheAdolf/DOCKER/Simulacion_financiera/data/processed/DeltaLake/Personas_Nacional/"
+#print("Maximizando los buffers TCP del kernel en la RAM...")
+# Subimos el límite de memoria por socket a 2 GB (2147483648 bytes)
+#system("sysctl -w net.core.wmem_max=2147483648")
+#system("sysctl -w net.core.rmem_max=2147483648")
+# Ajustamos los buffers mínimos, por defecto y máximos de la pila de red IPv4
+#system("sysctl -w net.ipv4.tcp_wmem='4096 87380 2147483648'")
+#system("sysctl -w net.ipv4.tcp_rmem='4096 87380 2147483648'")
+
+
+
+ruta_lake_vivs <- "/home/rstudio/data/processed/DeltaLake/Viviendas_Nacional/"
+ruta_lake_per <- "/home/rstudio/data/processed/DeltaLake/Personas_Nacional/"
+dir.exists("/home/rstudio/data/processed/DeltaLake/Viviendas_Nacional")
 
 ds_vivs <- open_dataset(ruta_lake_vivs)
 ds_pers <- open_dataset(ruta_lake_per)
@@ -36,6 +46,10 @@ ME_8   <- as.data.table(read.csv("data/processed/MasasEconomicas H3-8.csv"))
 columnas_indices <- c("Pob_Flotante", "Masa_Salarial", "Indice_Zombificacion", "Vuln_Efectivo", 
                       "FAC_SOCECO", "VAL_FRIC", "Tasa_Resiliencia", "Indice_Entropia", "Mixed_Use_Score")
 
+
+
+
+
 for (k in 3:8){
   eval(parse(text = paste0("DATAPCA <- copy(ME_", k,")")))
   datos_indices <- DATAPCA[, ..columnas_indices]
@@ -53,12 +67,32 @@ semana_objetivo   <- 1200
 
 week     <- 1
 
+
+print("Encendiendo Netcat en los puertos 9998 y 9999...")
+# pipe() ejecuta Netcat en segundo plano dentro del contenedor. 
+# R escribe aquí y Netcat lo escupe al socket TCP. ¡Cero cuelgues!
+
+# Forzamos a Netcat a reservar 1 GB de RAM para retener los JSON de la simulación
+#con_clientes  <- pipe("nc -lk -O 1073741824 -I 1073741824 0.0.0.0 9998", open = "w")
+#con_historial <- pipe("nc -lk -O 1073741824 -I 1073741824 0.0.0.0 9999", open = "w")
+
+
+config <- list(
+  "bootstrap.servers" = "kafka:9092",
+  "message.timeout.ms" = "60000",            # Otorga hasta 1 minutos para que Kafka confirme la recepción
+  "queue.buffering.max.messages" = "200000",   # Permite acumular hasta 2 millones de mensajes en la RAM
+  "batch.num.messages" = "20000",             # Empaqueta 50,000 registros juntos antes de pasarlos a la red
+  "linger.ms" = "50"                          # Pausa de 50 milisegundos para optimizar el empaquetado del batch
+)
+producer <- Producer$new(config)
+
+
 for (week in 1:semana_objetivo){
     VIV_SAM<- data.table(NULL)
     FECHAS   <- fecha_base + (week - 1) * 7 + 0:4
     
     set.seed(2026)
-    NN <- round(1500*1.05^(0.05*week/52))
+    NN <- round(15000*1.05^(0.05*week/52))
     viviendas_seleccionadas <- tabla_ids_nacional %>% 
       slice_sample(n = rbinom(1, NN, 0.8)) %>% pull(IDVIV)
     
@@ -368,18 +402,32 @@ for (week in 1:semana_objetivo){
     
     historial <- historial %>% mutate(anio_mes = format(fecha_corte, "%Y_%m"))
     
-    write_dataset( dataset = clientes, path = "C:/Users/TheAdolf/DOCKER/Simulacion_financiera/data/processed/DataLake/Clientes/", 
-                   format = "parquet" )
-    write_dataset( dataset = historial, path = "C:/Users/TheAdolf/DOCKER/Simulacion_financiera/data/processed/DataLake/Historial/", 
-                   format = "parquet", partitioning = "anio_mes" )
+    batch_size <- 20
+
+    for(Start in seq(1, nrow(clientes), by = batch_size)) {
+      End          <- min(Start + batch_size - 1, nrow(clientes))
+      clientes_batch <- clientes[Start:End, ]
+      historial_batch <- historial[ historial$id_cliente %in% clientes_batch$id_cliente, ]
+      
+      batch_id     <- paste( c(sample(c(LETTERS), 1),
+                               sample(c(0:9, 0:9, LETTERS, letters), 15, replace = TRUE)),
+                             collapse="")
+      fecha_envio  <- format( Sys.time(), "%Y-%m-%d %H:%M:%OS3" )
+      
+      clientes_batch$batch_id <- batch_id
+      historial_batch$batch_id <- batch_id
+      clientes_batch$fecha_envio <- fecha_envio
+      historial_batch$fecha_envio <- fecha_envio
+
+      producer$produce( topic = "clientes", 
+                        value = jsonlite::toJSON( clientes_batch, dataframe = "rows", auto_unbox = TRUE ) )
+      producer$produce( topic = "historial_crediticio", 
+                        value = jsonlite::toJSON( historial_batch, dataframe = "rows", auto_unbox = TRUE ) )
+    }
+    producer$flush(60000)
+    
 }
 
 rm(tabla_ids_nacional)
 
-
-
-
-
-
-    
-
+print("Puertos liberados y consola lista.")
