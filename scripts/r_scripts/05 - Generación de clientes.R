@@ -9,7 +9,7 @@ library(h3jsr)
 library(data.table)
 library(jsonlite)
 library(kafka)
-
+#remotes::install_version("kafka")
 
 #print("Maximizando los buffers TCP del kernel en la RAM...")
 # Subimos el límite de memoria por socket a 2 GB (2147483648 bytes)
@@ -63,7 +63,7 @@ for (k in 3:8){
 }
 
 fecha_base        <- as.Date("2000-01-03") 
-semana_objetivo   <- 1200
+semana_objetivo   <- 1350
 
 week     <- 1
 
@@ -87,14 +87,13 @@ config <- list(
 producer <- Producer$new(config)
 
 
-for (week in 1:semana_objetivo){
+#for (week in sample(1:semana_objetivo)){
     VIV_SAM<- data.table(NULL)
     FECHAS   <- fecha_base + (week - 1) * 7 + 0:4
     
     set.seed(2026)
-    NN <- round(20000*1.05^(0.05*week/52))
-    viviendas_seleccionadas <- tabla_ids_nacional %>% 
-      slice_sample(n = rbinom(1, NN, 0.8)) %>% pull(IDVIV)
+    NN <- round(2000*1.05^(0.05*week/52))
+    viviendas_seleccionadas <- tabla_ids_nacional %>% slice_sample(n = rbinom(1, NN, 0.8)) %>% pull(IDVIV)
     
     VIV_SAM <- ds_vivs %>% mutate(IDVIV = paste0(CVEGEO,CVE_MZA,ID_DOMICILIO))%>%
       filter(IDVIV %in% viviendas_seleccionadas) %>%
@@ -177,9 +176,9 @@ for (week in 1:semana_objetivo){
       mutate( id_cliente = row_number(),
         # Demografía Base
         sexo = sample(c("M", "F"), n(), replace = TRUE, prob = c(0.48, 0.52)),
-        edad = (as.numeric(substr(Sys.Date(),1,4)) - as.numeric(substr(fecha_base,1,4))) + 
-                    round(rbeta(n(), 2.5, 3.5) * (75 - 18) + 18),
-        Fecha_nacimiento = Sys.Date() - years(edad) - days(sample(1:365, n(), replace = TRUE)),
+        edad = round(rbeta(n() , 2.5, 3.5) * (75 - 18) + 18),
+        Fecha_nacimiento = FECHA_ALTA - years(edad) - days(sample(1:365, n(), replace = TRUE)),
+        edad = (as.numeric(substr(Sys.Date(),1,4)) - as.numeric(substr(Fecha_nacimiento,1,4))),
         
         estado_civil = case_when(
           edad < 25 ~ sample(c("Soltero(a)", "Casado(a)"), n(), replace = TRUE, prob = c(0.90, 0.10)),
@@ -332,6 +331,49 @@ for (week in 1:semana_objetivo){
         plazo_meses = sample(PlazosPosibles, n(), replace = TRUE),
         TASA_INTASIG = rbeta(n(), 2, 8) + 0.10, # Tasa base del 10% + variación Beta
         
+        
+        # ==============================================================================
+        # VARIABLES DE RIESGO, PLD Y FRAUDE
+        # ==============================================================================
+        
+        # 1. DTI (Debt-to-Income) - Qué tan endeudado está respecto a lo que gana
+        DTI = SAL_TOTDEU / (ING_ANUAL + 1),
+        
+        # 2. Score PLD (Lavado de Dinero) 0 - 100
+        # Anomalía: Gasta más de lo que gana + tiene patrimonio alto sin educación formal
+        Score_PLD = (gasto_mensual / (ingreso_mensual + 1)) * 30 + 
+          ifelse(nivel_edu %in% EducacionBasica & PATR_EST > 500000, 40, 0) + 
+          runif(n(), 0, 15),
+        Score_PLD = pmin(100, pmax(0, Score_PLD)), # Acotar entre 0 y 100
+        
+        # 3. Alerta de Cuenta Concentradora (Lavado / Mula)
+        # Altamente probable si el Score PLD es mayor a 75
+        Ind_Cuenta_Concentradora = rbinom(n(), 1, prob = case_when(
+          Score_PLD > 75 ~ 0.12, 
+          Score_PLD > 50 ~ 0.02, 
+          TRUE           ~ 0.001
+        )),
+        
+        # 4. Alerta de Robo de Identidad / Cuenta Fantasma
+        # Perfil riesgoso: Score bajo, poca antigüedad laboral, pero alta prob de fraude base
+        Ind_Robo_Identidad = rbinom(n(), 1, prob = case_when(
+          prob_fraude > 0.03 & ANT_LAB_MES < 12 ~ 0.08,
+          TRUE                                  ~ 0.002
+        )),
+        
+        # 5. PEP (Persona Políticamente Expuesta)
+        # Es raro (aprox 0.5% de la base), pero suele concentrarse en ingresos/patrimonios altos
+        Ind_PEP = case_when( ingreso_mensual > 100000 & runif(n()) < 0.05 ~ 1,
+          runif(n()) < 0.002 ~ 1, TRUE ~ 0 ),
+        
+        # 6. Semilla para Análisis de Grafos (Grafo Bipartito / Redes)
+        # Le asignamos a cada cliente a quién le transfiere más dinero. 
+        # (Seleccionamos IDs al azar de la misma base para crear la red de conexiones)
+        ID_Contacto_Frecuente = sample(1:n(), n(), replace = TRUE),
+        
+        
+
+        
         # ==============================================================================
         # FASE 4: REDONDEO Y LIMPIEZA FINAL
         # ==============================================================================
@@ -345,6 +387,8 @@ for (week in 1:semana_objetivo){
       select(-starts_with("mod_"), -UTIL_TCBase, -prob_caer_en_mora, -any_of("geom"), 
              -Pob_Flotante, -Indice_Entropia, -Indice_Zombificacion, -Tasa_Resiliencia,
              -Mixed_Use_Score, -Vuln_Efectivo, -Masa_Salarial, -FAC_SOCECO )
+    
+    
     
     # 2.A Generar los productos (Ej: de 1 a 3 créditos por cliente)
     productos <- clientes %>%
@@ -380,12 +424,38 @@ for (week in 1:semana_objetivo){
       historial <- productos %>% uncount(plazo_total, .id = "mes_vida", .remove = FALSE)
       setDT(historial) 
       
-      historial[, `:=`( meses_atras = plazo_total - mes_vida, plazo_remanente = plazo_total - mes_vida,
-        mora = rbinom(.N, 1, prob = prob_mora) )]
-      historial[, `:=`( mes_absoluto = mes_actual - meses_atras, pago_realizado = fcase(mora == 0, pago_fijo, default = 0),
-        cambio_score = fcase(mora == 1, -15, default = 2) )]
+      # 1. Variables base del ciclo de vida y mora binomial
+      historial[, `:=`( meses_atras = plazo_total - mes_vida, 
+                        plazo_remanente = plazo_total - mes_vida,
+                        mora = rbinom(.N, 1, prob = prob_mora) )]
+      
+      # ==============================================================================
+      # NUEVAS VARIABLES DINÁMICAS DE RIESGO Y GESTIÓN DE PORTAFOLIO
+      # ==============================================================================
+      
+      # 5. Días de Mora (Continua): Si hay mora, ¿cuántos días? (Exponencial redondeada para sesgar hacia atrasos cortos)
+      historial[, Dias_Mora_Mensual := fcase( mora == 1, pmin(round(rexp(.N, rate = 1/45) + 1), 180), # Tope de 180 días
+        default = 0 )]
+      
+      # 6. Pago Mínimo (Binaria): El cliente no está en mora, pero solo paga el mínimo (Típico en tarjetas)
+      historial[, Ind_Pago_Minimo := fcase( mora == 0 & tipo_producto == "Tarjeta", rbinom(.N, 1, prob = 0.25), default = 0L )]
+      
+      # 7. Aumento de Línea de Crédito (Binaria): Premio del banco por buen comportamiento cada 6 meses
+      historial[, Ind_Aumento_Linea := fcase( mes_vida %% 6 == 0 & mora == 0 & runif(.N) > 0.85, 1,  default = 0 )]
+      # ==============================================================================
+      
+      # Calculamos pagos reales tomando en cuenta si hizo pago mínimo o cayó en mora
+      historial[, `:=`(  mes_absoluto = mes_actual - meses_atras,  
+          pago_realizado = fcase( mora == 1, 0,  Ind_Pago_Minimo == 1, round(pago_fijo * 0.15, 2), # Paga solo el 15% de su cuota fija
+          default = pago_fijo ),
+        cambio_score = fcase(  mora == 1, -15, 
+          Ind_Pago_Minimo == 1, -2, # Pagar el mínimo baja ligeramente el score a la larga
+          Ind_Aumento_Linea == 1, 5, # Un aumento de línea mejora el score
+          default = 2 ) )]
+      
       historial[, `:=`( anio_corte = anio_actual + floor((mes_absoluto - 1) / 12), mes_corte = ((mes_absoluto - 1) %% 12) + 1 )]
       historial[, fecha_corte := make_date(anio_corte, mes_corte, dia_corte)]
+      
       
       setorder(historial, id_cliente, id_producto, mes_vida)
     
@@ -395,14 +465,41 @@ for (week in 1:semana_objetivo){
       historial[, saldo := pmax(monto_credito - monto_pagado_acum, 0)]
       historial[, estatus := fcase( saldo <= 0, "Pagado", mora == 1, "En Atraso", default = "Al Corriente" )]
       
+      
+      
+      # ==============================================================================
+      # VARIABLES VITALES DE PREVENCIÓN DE LAVADO DE DINERO (PLD) Y FRAUDE
+      # ==============================================================================
+      
+      # 8. Alerta de Estructuración ("Pitufos" / Smurfing)
+      # ¿Hubo múltiples depósitos pequeños para evadir umbrales en este mes?
+      # Más probable en cuentas concentradoras o clientes con Score PLD alto
+      historial[, Alerta_Estructuracion := fcase( runif(.N) < 0.005, 1, # Ruido base aleatorio
+        mora == 0 & monto_pagado_acum > (monto_credito * 0.5) & runif(.N) < 0.02, 1, # Paga de golpe créditos grandes de forma sospechosa
+        default = 0 )]
+      
+      # 9. Incongruencia de IP / Geografía (Fraude Takeover)
+      # Alerta de que la cuenta pudo ser hackeada (Robo de cuenta).
+      historial[, Riesgo_IP_Geo := fcase( runif(.N) < 0.015, 1, # 1.5% de las transacciones mensuales tienen IPs raras (VPNs, viajes, etc.)
+        default = 0 )]
+      
+      # 10. Velocidad de Fondos (In-and-Out)
+      # El dinero entra a la cuenta e inmediatamente (en menos de 24 hrs) se transfiere a otra
+      # Típico de "Mulas" financieras.
+      historial[, Alerta_In_Out := fcase( Alerta_Estructuracion == 1 & runif(.N) < 0.4, 1, # Correlacionado con los pitufos
+        runif(.N) < 0.01, 1, default = 0 )]      
+      
+      
+      
       setorder(historial, id_cliente, id_producto, -mes_vida)
       historial[, c("FECHA_ALTA", "meses_atras", "mes_absoluto", "anio_corte", "mes_corte", "dia_corte",
-                    "monto_pagado_acum", "cambio_score", "SCO_ACT ") := NULL]
+                    "monto_pagado_acum", "cambio_score", "SCO_ACT") := NULL]
     })
     
     historial <- historial %>% mutate(anio_mes = format(fecha_corte, "%Y_%m"))
     
     batch_size <- 20
+    Start <- 1
 
     for(Start in seq(1, nrow(clientes), by = batch_size)) {
       End          <- min(Start + batch_size - 1, nrow(clientes))

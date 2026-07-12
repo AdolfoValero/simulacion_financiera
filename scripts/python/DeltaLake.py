@@ -28,7 +28,9 @@ from pyspark.sql import SparkSession
 
 SparkLote = SparkSession.builder.appName("GeneracionLote").master("local[12]") \
     .config("spark.driver.memory", "70g") \
-    .config("spark.jars.packages", "io.delta:delta-spark_2.13:4.1.0") \
+    .config("spark.jars.packages", "io.delta:delta-spark_2.12:3.3.2") \
+    .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
+    .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog") \
     .config("spark.sql.execution.arrow.pyspark.enabled", "true") \
     .config("spark.sql.adaptive.enabled", "false") \
     .getOrCreate()
@@ -320,7 +322,8 @@ SparkLote.stop()
 
 
 SparkDelta = SparkSession.builder.appName("Export2Delta").master("local[12]") \
-    .config("spark.driver.memory", "60g").config("spark.jars.packages", "io.delta:delta-spark_2.13:4.1.0") \
+    .config("spark.driver.memory", "60g") \
+    .config("spark.jars.packages", "io.delta:delta-spark_2.12:3.3.2") \
     .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
     .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog") \
     .config("spark.sql.execution.arrow.pyspark.enabled", "true") \

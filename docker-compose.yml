@@ -1,11 +1,36 @@
 name: Simulacion_financiera
 
 services:
-  # ---------------------------------------------------------
-  # 1. GENERADOR DE DATOS Y STREAMING (R)
-  # ---------------------------------------------------------
+
+  # ==========================================================
+  # 0. BASE DE DATOS COMPARTIDA
+  # ==========================================================
+  postgres:
+    image: postgres:15
+    container_name: nodo_postgres
+    networks:
+      - default
+      - bi-net
+    environment:
+      POSTGRES_USER: hive
+      POSTGRES_PASSWORD: hive
+      POSTGRES_DB: hive_metastore
+    volumes:
+      - D:/DATOS/SimulacionFinanciera/postgres_data:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/01_superset.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hive -d hive_metastore"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+
+  # ==========================================================
+  # 1. GENERADOR DE DATOS (R)
+  # ==========================================================
   r_streaming:
-    build: 
+    build:
       context: ./entorno_r
       dockerfile: Dockerfile
     container_name: nodo_r
@@ -14,46 +39,64 @@ services:
     environment:
       - PASSWORD=admin
     volumes:
-      - ./data:/home/rstudio/data
+      - D:/DATOS/SimulacionFinanciera:/home/rstudio/data
       - ./src:/home/rstudio/src
       - ./scripts:/home/rstudio/scripts
+    depends_on:
+      - kafka
 
-  # ---------------------------------------------------------
-  # 2. MOTOR ETL Y DATA LAKE (PySpark)
-  # ---------------------------------------------------------
+
+  # ==========================================================
+  # 2. MOTOR ETL Y DATA LAKE (PySpark + Delta Lake)
+  # ==========================================================
   spark_etl:
-    build: 
+    build:
       context: ./entorno_pyspark
       dockerfile: Dockerfile
     container_name: nodo_spark
+    hostname: spark-etl
+    user: root # Necesario para que el script de inicio pueda configurar el sudo
     ports:
-      - "8888:8888"   # Interfaz Jupyter
-      - "9998:9998"   # Puerto TCP para recibir Clientes desde R
-      - "9999:9999"   # Puerto TCP para recibir Historial desde R
+      - "8888:8888"
+      - "10000:10000"
     environment:
       - JUPYTER_TOKEN=admin
+      - GRANT_SUDO=yes # <--- ESTO LE DA PODERES A JOVYAN
     volumes:
-      - ./data:/home/jovyan/data
+      - D:/DATOS/SimulacionFinanciera:/home/jovyan/data
+      - D:/DATOS/SimulacionFinanciera/warehouse:/warehouse # <- AGREGAR ESTA LÍNEA
       - ./src:/home/jovyan/src
       - ./scripts:/home/jovyan/scripts
+      - ./spark/spark-defaults.conf:/usr/local/spark/conf/spark-defaults.conf:ro
+    depends_on:
+      hive_metastore:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 8888 || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 8
+    restart: unless-stopped
 
-  # ---------------------------------------------------------
+
+  # ==========================================================
   # 3. ENTRENAMIENTO ML/DL (Python + NVIDIA GPU)
-  # ---------------------------------------------------------
+  # ==========================================================
   ml_training:
-    build: 
+    build:
       context: ./entorno_entrenamiento
       dockerfile: Dockerfile
     container_name: nodo_entrenamiento
     ports:
-      - "8889:8888"   # Interfaz Jupyter (En el puerto 8889 para no chocar con Spark)
+      - "8889:8888"
     environment:
       - JUPYTER_TOKEN=admin
     volumes:
-      - ./data:/workspace/data
+      - D:/DATOS/SimulacionFinanciera/warehouse:/warehouse # <- AGREGAR ESTA LÍNEA
       - ./src:/workspace/src
       - ./scripts:/workspace/scripts
-    # ESTO ACTIVA TU TARJETA GRÁFICA EN EL CONTENEDOR
     deploy:
       resources:
         reservations:
@@ -62,18 +105,168 @@ services:
               count: all
               capabilities: [gpu]
 
-  # ---------------------------------------------------------
+
+  # ==========================================================
   # 4. INFERENCIA EN PRODUCCIÓN (Python Ligero)
-  # ---------------------------------------------------------
+  # ==========================================================
   ml_produccion:
-    build: 
+    build:
       context: ./entorno_produccion
       dockerfile: Dockerfile
     container_name: nodo_produccion
     ports:
-      - "8000:8000"   # Puerto de la API REST / TCP para recibir nuevos datos a predecir
+      - "8000:8000"
     volumes:
-      - ./data:/app/data # Para leer los modelos guardados y guardar resultados
-      - ./src:/app/src
-    # En producción corremos directamente un servidor API o un script de escucha
-    command: uvicorn src.api_produccion:app --host 0.0.0.0 --port 8000
+      - D:/DATOS/SimulacionFinanciera:/app/data
+    depends_on:
+      - kafka
+
+
+  # ==========================================================
+  # 5. KAFKA
+  # ==========================================================
+  kafka:
+    image: apache/kafka:3.7.0
+    container_name: nodo_kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_LOG_RETENTION_HOURS: 24
+      KAFKA_LOG_RETENTION_BYTES: 10737418240
+      CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"
+    volumes:
+      - D:/DATOS/SimulacionFinanciera/kafka_data:/tmp/kraft-kafka-logs
+
+
+  # ==========================================================
+  # 6. HIVE STANDALONE METASTORE
+  # ==========================================================
+  hive_metastore:
+    build:
+      context: ./entorno_hive
+      dockerfile: Dockerfile
+    container_name: nodo_hive_metastore
+    networks:
+      default:
+        aliases:
+          - hive-metastore
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: hive_metastore
+      DB_USER: hive
+      DB_PASSWORD: hive
+    ports:
+      - "9083:9083"
+    volumes:
+      - D:/DATOS/SimulacionFinanciera/warehouse:/warehouse
+      - D:/DATOS/SimulacionFinanciera/catalog:/catalog
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 9083 || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 10
+    restart: unless-stopped
+
+
+  # ==========================================================
+  # 7. TRINO (Motor SQL federado)
+  # ==========================================================
+  trino:
+    image: trinodb/trino:435
+    user: "0"
+    entrypoint: /bin/bash -c "chown -R trino:trino /var/trino/data && exec /usr/lib/trino/bin/run-trino"
+    container_name: nodo_trino
+    networks:
+      - default
+      - bi-net
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./trino/etc/trino/config.properties:/etc/trino/config.properties:ro
+      - ./trino/etc/trino/jvm.config:/etc/trino/jvm.config:ro
+      - ./trino/etc/trino/node.properties:/etc/trino/node.properties:ro
+      - ./trino/catalog/delta.properties:/etc/trino/catalog/delta.properties:ro
+      - trino_data:/var/trino/data
+      - D:/DATOS/SimulacionFinanciera:/data:ro
+      - D:/DATOS/SimulacionFinanciera/warehouse:/warehouse # <- AGREGAR ESTA LÍNEA
+    depends_on:
+      hive_metastore:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/v1/info | grep -q '\"starting\":false' || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 12
+    restart: unless-stopped
+
+
+  # ==========================================================
+  # 8. SCHEDULER SQL
+  # ==========================================================
+  sql_scheduler:
+    build:
+      context: ./entorno_scheduler
+      dockerfile: Dockerfile
+    container_name: nodo_scheduler
+    environment:
+      - TRINO_HOST=trino
+      - TRINO_PORT=8080
+      - TRINO_USER=scheduler
+      - TRINO_CATALOG=delta
+      - TRINO_SCHEMA=default
+    volumes:
+      - ./scripts/sql:/scripts/sql:ro
+    depends_on:
+      trino:
+        condition: service_healthy
+    restart: unless-stopped
+
+
+  # ==========================================================
+  # 9. APACHE SUPERSET (BI)
+  # ==========================================================
+  bi_superset:
+    build:
+      context: ./entorno_bi
+      dockerfile: Dockerfile
+    container_name: nodo_bi_superset
+    networks:
+      - bi-net
+    ports:
+      - "8088:8088"
+    environment:
+      - SUPERSET_SECRET_KEY=clave_secreta_simulacion_12345
+      - SQLALCHEMY_DATABASE_URI=postgresql+psycopg2://superset:superset@postgres:5432/superset
+      - SUPERSET_FEATURE_FLAGS={"ALLOW_ADHOC_SUBQUERY":true}
+      - WTF_CSRF_ENABLED=false
+      - PREVENT_UNSAFE_DB_CONNECTIONS=false
+    command: bash -c "superset db upgrade && superset fab create-admin --username admin --firstname Admin --lastname User --email admin@superset.com --password admin || true && superset init && superset run -h 0.0.0.0 -p 8088 --with-threads"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      trino:
+        condition: service_healthy
+    restart: unless-stopped
+
+
+# ==========================================================
+networks:
+  default:
+    driver: bridge
+  bi-net:
+    driver: bridge
+
+volumes:
+  trino_data:

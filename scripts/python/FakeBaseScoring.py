@@ -1,5 +1,6 @@
 
 
+
 from functools import reduce
 from pyspark.sql import functions as F
 from pyspark.sql import SparkSession
@@ -17,7 +18,7 @@ from pyspark.ml.feature import VectorAssembler, StringIndexer, OneHotEncoder, St
 
 
 SparkDelta = SparkSession.builder.appName("Export2Delta").master("local[*]").config("spark.driver.memory", "40g") \
-    .config("spark.jars.packages", "io.delta:delta-spark_2.13:4.1.0") \
+    .config("spark.jars.packages", "io.delta:delta-spark_2.12:3.3.2") \
     .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
     .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog") \
     .config("spark.sql.execution.arrow.pyspark.enabled", "true") \
@@ -25,8 +26,8 @@ SparkDelta = SparkSession.builder.appName("Export2Delta").master("local[*]").con
     .getOrCreate()
 
 # Rutas (Usa r"" para evitar problemas con las diagonales en Windows)
-ClientDeltaPATH = r"/home/data/datalake/clientes_delta"
-HistorDeltaPATH = r"/home/data/datalake/historial_delta"
+ClientDeltaPATH = r"/warehouse/clientes"
+HistorDeltaPATH = r"/warehouse/historial"
 
 # LEER COMO DELTA, NO COMO PARQUET
 df_cliente_delta   = SparkDelta.read.format("delta").load(ClientDeltaPATH)
