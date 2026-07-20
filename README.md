@@ -16,15 +16,20 @@ esto usaremos diferentes herramientas como:
 - Docker para generar contenedores con las herramientas y
   configuraciones necesarias.
 - R para la generación de millones de registros de datos sinteticos.
-- PySpark y Delta-Lake para las operaciones ETL y almacenamiento de los
-  millones de registros.
+- MinIO para la administracion del almacenamiento tipo amazon S3 usando
+  buckets.
+- PySpark y Delta-Lake para las operaciones ETL de los millones de
+  registros.
 - PyTorch, SciPy para entrenar modelos de ML y DL.
 - Python para poner el modelo en producción.
 - Kafka para orquestar el flujo de datos entre contenedores.
+- Trino, Hive-Metastore y Postgress para la administracion de los
+  catalogos y bases de datos.
+- Superset para la generacion de resultados tipo Bussiness Intelligence.
 
 El siguiente diagrama, generado con mermeid.live, ejemplifica nuestra
 configuración generada con apoyo de herramientas de IA
-<img src="figures/archdiagram.png" style="width:60.0%" alt="Elephant" />
+<img src="figures/archdiagram.png" style="width:70.0%" alt="Elephant" />
 
 # Representacion de la información geo-referenciada.
 
