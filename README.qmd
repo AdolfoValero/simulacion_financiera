@@ -27,7 +27,8 @@ El objetivo de este GitHub es mostrar el uso de diferentes herramientas computac
 * Superset para la generacion de resultados tipo Bussiness Intelligence.
 
 El siguiente diagrama, generado con mermeid.live, ejemplifica nuestra configuración generada con apoyo de herramientas de IA
-![Elephant](figures/archdiagram.png){width=70%}
+
+![Elephant](figures/archdiagram.png){width=100%}
 
 
 # Representacion de la información geo-referenciada.

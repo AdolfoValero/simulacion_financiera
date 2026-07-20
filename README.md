@@ -29,7 +29,9 @@ esto usaremos diferentes herramientas como:
 
 El siguiente diagrama, generado con mermeid.live, ejemplifica nuestra
 configuración generada con apoyo de herramientas de IA
-<img src="figures/archdiagram.png" style="width:70.0%" alt="Elephant" />
+
+<img src="figures/archdiagram.png" style="width:100.0%"
+alt="Elephant" />
 
 # Representacion de la información geo-referenciada.
 
